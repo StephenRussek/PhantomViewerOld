@@ -41,3 +41,12 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+#eclipse files
+.metadata
+build
+.settings
+dist
+.project
+.pydevproject
+.spyderworkspace
