@@ -1,0 +1,224 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Nov 28 13:11:14 2013
+Contains classes that constitute a virtual phantom
+A virtual phantom contains elements, ROIs, 
+@author: stephen russek
+"""
+import numpy as np
+from PyQt4 import QtGui, QtCore
+
+
+class VPhantom():
+  """Class that defines a virtual phantom with all properties required to simulate image of a real object"""
+  def __init__(self):
+    self.phantomName = "New phantom"
+    self.B0 = 1.5        #B0 field in Tesla
+    self.Temperature = 20   #Temperature in C"
+    self.Comment = "New phantom"
+    self.units = "mm, ms, C, mM"
+    self.nROISets = 0
+    self.ROIsets= []   #list of ROI sets included in the phantom
+    self.ROIsetdict = {}     #dictionary that lists all ROI sets in a particular phantom
+    self.Elements = []
+    self.phantomImage =  ""    #image of the phantom
+    
+  def printROIinfo(self):
+      """Returns a string describing a virtual phantom"""
+      ps = "Phantom Viewer ROI file" + "\n"
+      ps = ps + "PhantomName= " + self.phantomName + "\n"
+      ps = ps + "Units= distances in mm, times in ms, fields in T, Temperatures in C, concentrations in mM" + "\n"
+      ps = ps + "PhantomComment= " + self.Comment + "\n"
+      ps = ps + "B0= " + str(self.B0) + "\n"
+      ps = ps + "Temperature= " + str(self.Temperature) + "\n" + "\n"
+      ps = ps + "NumberofROIsets= " + str(len(self.ROIsets)) + "\n" + "\n"
+      for rs in self.ROIsets:
+        ps = ps + "ROISetName="  + rs.ROIName + "\n"
+        ps = ps + "ROISetComment="  + rs.Comment + "\n"
+        ps = ps + "ROIColor="  + rs.ROIColor + "\n"
+        ps = ps + "nROIs=" + str(rs.nROIs) + "\n"
+        ps = ps + "Index="  + str([o.Index for o in rs.ROIs]).replace('[','').replace(']','') + "\n"
+        ps = ps + "Concentration="  + str(["{:.3f}".format(o.Concentration) for o in rs.ROIs]).replace('[','').replace(']','').replace("\'",'') + "\n"
+        ps = ps + "T1="  + str(["{:.2f}".format(o.T1) for o in rs.ROIs]).replace('[','').replace(']','').replace("\'",'') + "\n"
+        ps = ps + "T2="  + str(["{:.2f}".format(o.T2) for o in rs.ROIs]).replace('[','').replace(']','').replace("\'",'') + "\n"
+        ps = ps + "PD="  + str(["{:.2f}".format(o.PD) for o in rs.ROIs]).replace('[','').replace(']','').replace("\'",'') + "\n"
+        ps = ps + "Xcenter="  + str(["{:.2f}".format(o.Xcenter) for o in rs.ROIs]).replace('[','').replace(']','').replace("\'",'') + "\n"
+        ps = ps + "Ycenter="  + str(["{:.2f}".format(o.Ycenter) for o in rs.ROIs]).replace('[','').replace(']','').replace("\'",'') + "\n"
+        ps = ps + "Zcenter="  + str(["{:.2f}".format(o.Zcenter) for o in rs.ROIs]).replace('[','').replace(']','').replace("\'",'') + "\n"
+        ps = ps + "\n"
+      return ps
+    
+  def readPhantomFile(self, direct=''):
+    '''Reads in and parses phantom file'''
+    if direct == False:
+        direct = ''
+    fileName = QtGui.QFileDialog.getOpenFileName(None, 'Open Phantom File' , direct , 'Phantom File (*.dat)')
+    if not fileName:  #if cancel is pressed return
+      return None
+    f = open(str(fileName), 'r')
+    for line in f:
+      parameter = line[:line.find('=')]
+      values=line[line.find('=')+1:-1]
+      if parameter == "PhantomName":
+        self.phantomName = values
+      if parameter == "B0":
+        self.B0 = float(values)
+      if parameter == "Temperature":
+        self.Temperature = float(values)
+      if parameter == "PhantomComment":
+        self.Comment = values
+      if parameter == "NumberofROIsets":
+        self.nROISets = int(values)
+      if parameter == "ROISetName":
+        newROISet=ROISet(values)    #create new ROI set and append to list of ROISets
+        newROISet.ROIName = values
+        self.ROIsets.append(newROISet)
+      if parameter == "nROIs":
+        newROISet.nROIs = int(values)
+        newROISet.ROIs= [ROI() for i in range(newROISet.nROIs)]
+      if parameter == "ROISetComment":
+        newROISet.Comment = values
+      if parameter == "ROIColor":
+        newROISet.Color = values        
+      if parameter == "Index":
+        for i in range (newROISet.nROIs):
+          newROISet.ROIs[i].Index = int(values.split(",")[i])                    
+      if parameter == "T1":
+        for i in range (newROISet.nROIs):
+          newROISet.ROIs[i].T1 = float(values.split(",")[i]) 
+      if parameter == "T2":
+        for i in range (newROISet.nROIs):
+          newROISet.ROIs[i].T2= float(values.split(",")[i])
+      if parameter == "PD":
+        for i in range (newROISet.nROIs):
+          newROISet.ROIs[i].PD= float(values.split(",")[i])
+      if parameter == "ADC":
+        for i in range (newROISet.nROIs):
+          newROISet.ROIs[i].ADC= float(values.split(",")[i])                  
+      if parameter == "Concentration":
+        for i in range (newROISet.nROIs):
+          newROISet.ROIs[i].Concentration = float(values.split(",")[i])  
+      if parameter == "Xcenter":
+        for i in range (newROISet.nROIs):
+          newROISet.ROIs[i].Xcenter = float(values.split(",")[i])  
+      if parameter == "Ycenter":
+        for i in range (newROISet.nROIs):
+          newROISet.ROIs[i].Ycenter = float(values.split(",")[i])
+      if parameter == "Zcenter":
+        for i in range (newROISet.nROIs):
+          newROISet.ROIs[i].Zcenter = float(values.split(",")[i])          
+
+      
+class Element():
+    pass
+
+class Material():
+    pass
+
+class ROISet():
+  """Set of ROIs"""
+  def __init__(self, name):
+    self.ROIName  = name
+    self.Comment = ""
+    self.ROIColor = "g"
+    self.ROIs = []    #List of ROIs"
+    dROI=ROI()
+    if name == "":  #If no name is given create one default ROI
+        self.ROIs.append(dROI)
+        self.nROIs = 1
+    else:
+        self.nROIs = 0
+        
+  def SetROIsParameter(self, n, param, value):
+    nROI = self.ROIs[n]
+    nROI.SetROIParameter(param,value)
+
+  def translate(self,vector):
+      for roi in self.ROIs:
+          roi.translate(vector)
+          
+  def rotate(self,axis,theta):
+      for roi in self.ROIs:
+          roi.rotate(axis,theta)
+          
+  def printROIs (self):   #for debugging 
+      print "ROI name=" + self.ROIName +  " ,ROI number=" + str(self.nROIs) 
+      for roi in self.ROIs:
+        print "ROI= " + str(roi.Index) + ", ROI position= " + str(roi.Xcenter) + ", " + str(roi.Ycenter) + ", " + str(roi.Zcenter) 
+  
+
+      
+class ROI():
+  def __init__(self):
+    self.Name = "default"
+    self.Index = 0
+    self.Type = "Sphere"
+    self.Xcenter = 0.0  #position in mm
+    self.Ycenter = 0.0
+    self.Zcenter = 0.0
+    self.d1 = 10.0  #diameter in mm
+    self.T1 = 200.   #ROI T1 in ms
+    self.T2 = 100.  #ROI T2 in ms
+    self.PD = 100   #proton density in percent
+    self.Concentration = 100
+    self.ADC = 1.1    #Apparent diffusion constant in 10^-3 mm^2/s
+    self.SignalAve = 0.  #average value within ROI
+    self.SignalRMS = 0.
+    
+  def SetROIParameter(self, param, value):
+    if param == "Index":
+            self.Index = value
+    if param == "Type":
+            self.Type = value
+    if param == "Xcenter":
+            self.Xcenter = value
+    if param == "Ycenter":
+            self.Ycenter = value
+    if param == "Zcenter":
+            self.Zcenter = value
+    if param == "d1":
+            self.d1 = value
+    if param == "T1":
+            self.T1 = value
+    if param == "T2":
+            self.T2 = value 
+    if param == "PD":
+            self.PD = value   
+    if param == "ADC":
+            self.ADC = value                     
+    if param == "Concentration":
+            self.Concentration = value 
+ 
+  def Rcenter(self):
+      return np.array([self.Xcenter , self.Ycenter, self.Zcenter])
+    
+  def translate(self, vector):
+      self.Xcenter += vector[0]
+      self.Ycenter += vector[1]
+      self.Zcenter += vector[2]
+      
+  def rotate(self, axis, theta):
+      r= rotateVector(self.Rcenter(), axis, theta)
+      self.Xcenter = r[0]
+      self.Ycenter = r[1]
+      self.Zcenter = r[2]     
+
+  def ROIUpperLeft(self):
+      pass   
+    
+def rotateVector( v, axis, theta):
+    """
+    rotates vector v by  rotation matrix associated with counterclockwise rotation about
+    the given axis by theta radians. Euler-Rodriques formula   to rotate v np.dot(rotation_matrix(axis,theta), v)
+    """
+    axis = np.asarray(axis)
+    theta = np.asarray(theta)
+    axis = axis/np.sqrt(np.dot(axis, axis))
+    a = np.cos(theta/2)
+    b, c, d = -axis*np.sin(theta/2)
+    aa, bb, cc, dd = a*a, b*b, c*c, d*d
+    bc, ad, ac, ab, bd, cd = b*c, a*d, a*c, a*b, b*d, c*d
+    R = np.array([[aa+bb-cc-dd, 2*(bc+ad), 2*(bd-ac)],
+                     [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)],
+                     [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]]) 
+    return     np.dot(R, v)
