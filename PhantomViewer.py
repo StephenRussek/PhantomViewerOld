@@ -55,25 +55,19 @@ class MainDialog(QtGui.QMainWindow):
         self.GeometryView.show()
  
     def T1(self):       # opens ROIView module with T1 presets
-        self.T1View = ROIView.ROIView(self)
-        self.T1View.dataType = "T1"
-        self.T1View.setDataType(self.T1View.dataType)
+        self.T1View = ROIView.ROIView( "T1")
         self.T1View.show()
          
     def T2(self):
-        self.T2View = ROIView.ROIView(self)
-        self.T2View.dataType = "T2"
-        self.T2View.setDataType(self.T2View.dataType)
+        self.T2View = ROIView.ROIView('T2' )
         self.T2View.show()
   
     def Proton(self):
-        self.ProtonView = ROIView.ROIView(self)
-        self.ProtonView.dataType = "Proton Density"
-        self.ProtonView.setDataType(self.ProtonView.dataType)
+        self.ProtonView = ROIView.ROIView("PD-SNR")
         self.ProtonView.show()
    
     def SliceProfile(self):
-        self.SliceProf = ROIView.ROIView(self)
+        self.SliceProf = ROIView.ROIView("SP")
         self.SliceProf.setWindowTitle('Proton Density/SNR Phantom Analysis')
         self.SliceProf.show()
         self.SliceProf.rdPlot.setTitle("Proton Density raw data")

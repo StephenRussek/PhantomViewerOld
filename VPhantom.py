@@ -73,6 +73,8 @@ class VPhantom():
         newROISet=ROISet(values)    #create new ROI set and append to list of ROISets
         newROISet.ROIName = values
         self.ROIsets.append(newROISet)
+        if newROISet.ROIName=='SNR':   #sets flag if phantom has SNR ROIs to determine background
+          self.SNRROIs=newROISet
       if parameter == "nROIs":
         newROISet.nROIs = int(values)
         newROISet.ROIs= [ROI() for i in range(newROISet.nROIs)]

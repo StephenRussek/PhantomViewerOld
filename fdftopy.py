@@ -106,8 +106,10 @@ class VarianData:
           if( line.find("nslices") > 0 ):
              nslices = line.split("=")[-1].rstrip("\n; ").strip(" ")        
           if( line.find("slice_no") > 0 ):
-             sl = line.split("=")[-1].rstrip("\n; ").strip(" ") 
-             fdfImage.SliceLocation = float(sl)       
+             sl = line.split("=")[-1].rstrip("\n; ").strip(" ")
+          if( line.find("location") > 0 ):
+             location = line.split("=")[-1].rstrip("\n; ").strip(" ")  
+             fdfImage.SliceLocation = float(location[1:-2].split(',')[2]) *10   #last element in location string is slice location in cm      
           if( line.find("matrix") > 0 ):
              fdfImage.matrix = re.findall("(\d+)", line.rstrip())        
              if len(fdfImage.matrix) == 2:

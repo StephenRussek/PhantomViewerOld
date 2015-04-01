@@ -36,7 +36,7 @@ except:
 
 class ROIView(QtGui.QMainWindow):
   """Main ROI viewing window, customized for different analysis eg geometric distortion, T1, T2, SNR etc"""
-  def __init__(self , parent = None):
+  def __init__(self, dt,parent = None):
     super(ROIView, self).__init__()
     pg.setConfigOption('background', 0.2)   #Background on plots 0 = black, 1 = white
     pg.setConfigOption('foreground', 'w')
@@ -130,10 +130,12 @@ class ROIView(QtGui.QMainWindow):
     self.ui.rbUseBestGuess.clicked.connect(self.useBestGuess)       
     self.ui.rbViewDicomHeader.toggled.connect(self.viewDicomHeader)
     self.ui.txtDicomHeader.setHidden(True)  #Image header normally hidden
+    self.ui.chShowBackgroundROIs.clicked.connect(self.showROIs)
     #self.ui.rbViewMessages.toggled.connect(self.viewMessages)
 #  setup regions of interest (ROIs)
-    self.dataType = "T1"    #string indicating data type "T1", "T2", "PD", DIF ; determines what fitting models are accessible
+    self.dataType = str(dt)    #string indicating data type "T1", "T2", "PD-SNR", DIF ; determines what fitting models are accessible
     self.setDataType(self.dataType)
+    print self.dataType
     self.ADCmap = False
     self.Phantom = VPhantom.VPhantom()
     self.ui.lblPhantomType.setText(self.Phantom.phantomName)
@@ -431,7 +433,7 @@ class ROIView(QtGui.QMainWindow):
             snrroi=fCircleROI(self,[imCoord[0]-roi.d1/2, imCoord[1]-roi.d1/2], [roi.d1, roi.d1],"SNR", pen=self.snrPen)
             self.imv.getView().addItem(snrroi)
             self.snrROI=snrroi
-            self.snrROIs
+            self.bSNRROIs=True
     else:   #remove all ROIs from the images
         if hasattr(self,"pgROIs"):
           for roi in self.pgROIs:
@@ -555,6 +557,7 @@ class ROIView(QtGui.QMainWindow):
       del self.currentROIs.ROIs[roi.Index-1]
       for i,roi in enumerate(self.currentROIs.ROIs):    #rename ROI indexes
         roi.Index=i+1
+    self.currentROIs.nROIs = len(self.currentROIs.ROIs)
     self.bShowROIs = False
     self.showROIs()        
     self.bShowROIs = True
@@ -602,7 +605,11 @@ class ROIView(QtGui.QMainWindow):
       
   def openPhantomFile(self):
       self.Phantom=VPhantom.VPhantom()
-      self.Phantom.readPhantomFile(self.imageDirectory)  
+      self.Phantom.readPhantomFile(self.imageDirectory)
+      self.InitialROIs =self.Phantom.ROIsets[0]
+      self.ui.lblROISet.setText(self.InitialROIs.ROIName)
+      self.ui.hsROISet.setMaximum(self.Phantom.nROISets)
+      self.resetROIs()  
                
   def checkEqual(self, lst):    #returns True if all elements (except the 0th element) of the list are equal
     return lst[2:] == lst[1:-1]  
@@ -1163,7 +1170,7 @@ class ROIView(QtGui.QMainWindow):
       self.resultsPlot.setLabel('left', "T2(ms)")
       self.resultsPlot.setTitle("T2 Results")
       self.roiPen = pg.mkPen('r', width=3)
-    if dataType == "PD":
+    if dataType == "PD-SNR":
       self.ui.stackedModels.setCurrentIndex(2)
       self.setWindowTitle(self.wTitle + 'Proton Density/ SNR Analysis')
       self.rdPlot.setTitle("PD raw data")
@@ -1305,6 +1312,15 @@ class imageStackWindow(ROIView):
     self.imageMenu.addAction(self.actionClear_All_Images)
            
     self.phantomMenu = self.menu.addMenu('&Phantoms')
+    self.actionOpenPhantomFile = QtGui.QAction('Open phantom file', self)
+    self.actionOpenPhantomFile.setStatusTip('Open phantom file')
+    self.actionOpenPhantomFile.triggered.connect(rv.openPhantomFile)
+    self.phantomMenu.addAction(self.actionOpenPhantomFile)
+    self.actionSavePhantomFile = QtGui.QAction('Save phantom file', self)
+    self.actionSavePhantomFile.setStatusTip('Save phantom file')
+    self.actionSavePhantomFile.triggered.connect(rv.openPhantomFile)
+    self.phantomMenu.addAction(self.actionSavePhantomFile)  
+    
     self.actionSystemPhantom = QtGui.QAction('System Phantom', self)
     self.actionSystemPhantom.setStatusTip('System Phantom')
     self.actionSystemPhantom.triggered.connect(rv.SystemPhantom)
