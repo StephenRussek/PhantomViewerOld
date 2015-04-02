@@ -295,8 +295,7 @@ class ROIView(QtGui.QMainWindow):
     self.imageDirectory=os.path.dirname(str(self.fileNames[0]))#Save current directory   
     if len(self.fileNames) == 1:    #check to see if file is a DICOMDIR
       filename=self.fileNames[0]
-      s= str(filename[filename.lastIndexOf("\\")+1:])
-      if s == "DICOMDIR": 
+      if "DICOMDIR" in filename: 
           self.openDICOMdir(filename)
           return None                                            
     self.seriesFileNames.extend(self.fileNames)     #concatenate new file list with previous file list
@@ -578,15 +577,15 @@ class ROIView(QtGui.QMainWindow):
     self.bShowROIs = True
     self.showROIs() 
     
-  def reSizeROIs(self,index):
+  def reSizeROIs(self):
     if hasattr(self,"currentROIs"):
       size=float(self.ui.hsSize.value())/2
       self.ui.lblROISize.setText("{:.1f}".format(size))
-      if self.bEditROISet == True:  #translate ROI set
+      if self.bEditROISet == True:  #change size in ROI set
         for roi in self.currentROIs.ROIs: #initial ROIs remain unchanged
           roi.d1=size
       else:
-        self.currentROIs.ROIs[index-1].d1=size
+        self.currentROI.d1=size
       for roi in self.pgROIs:   #erase ROIs
           self.imv.getView().removeItem(roi)
           self.imv.getView().removeItem(roi.label)  
@@ -1268,7 +1267,7 @@ class fCircleROI(pg.EllipseROI):
             self.ROIViewInstance.showROIInfo()
         else:
             self.currentPen = self.pen
-            self.ROIViewInstance.currentROI=-1
+            #self.ROIViewInstance.currentROI=-1
         self.update() 
         
 #     def trimCircularROI(self,array):
