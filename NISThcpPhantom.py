@@ -17,7 +17,7 @@ WaterR2 = 0.5      #water R2 in s^-1
 DataTypes={"ADC":0,"T1":1,"T2":2}
 hcpArrayConcentration=[0,0,0,10,10,20,20,30,30,40,40,50,50,0,0,0,0]
 hcpArrayT1=[100.0 for i in range(17)]
-hcpArrayADC=[0.001 for i in range(17)]
+hcpArrayADC=[1.0 for i in range(17)]    #ADC in 10^-3 mm2/s
 nSNRROIs = 1
 snrROIdiameter =20
 SNRColor = "y"
@@ -118,7 +118,7 @@ class hcpPhantom(VPhantom.VPhantom):
   def SetSNRROIs(self,ptype):
   #set Baseline ROIs
       r=VPhantom.ROISet(ptype)
-      r.ROIName =  ptype + "Array"
+      r.ROIName =  ptype
       r.Field = 1.5
       r.Temperature = 20.
       r.nROIs=nSNRROIs

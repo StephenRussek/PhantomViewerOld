@@ -54,9 +54,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>5</y>
-        <width>41</width>
-        <height>16</height>
+        <y>0</y>
+        <width>46</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
@@ -68,8 +68,8 @@
        <rect>
         <x>10</x>
         <y>60</y>
-        <width>41</width>
-        <height>16</height>
+        <width>51</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
@@ -307,9 +307,9 @@
      <widget class="QLabel" name="label_31">
       <property name="geometry">
        <rect>
-        <x>590</x>
+        <x>585</x>
         <y>0</y>
-        <width>71</width>
+        <width>86</width>
         <height>21</height>
        </rect>
       </property>
@@ -327,9 +327,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>105</y>
-        <width>71</width>
-        <height>21</height>
+        <y>100</y>
+        <width>76</width>
+        <height>26</height>
        </rect>
       </property>
       <property name="text">
@@ -361,10 +361,10 @@
      <widget class="QLabel" name="label_59">
       <property name="geometry">
        <rect>
-        <x>85</x>
-        <y>105</y>
-        <width>56</width>
-        <height>20</height>
+        <x>90</x>
+        <y>100</y>
+        <width>71</width>
+        <height>26</height>
        </rect>
       </property>
       <property name="text">
@@ -403,10 +403,10 @@
      <widget class="QLabel" name="label_42">
       <property name="geometry">
        <rect>
-        <x>590</x>
+        <x>570</x>
         <y>40</y>
-        <width>81</width>
-        <height>21</height>
+        <width>106</width>
+        <height>26</height>
        </rect>
       </property>
       <property name="text">
@@ -519,9 +519,9 @@
       <property name="geometry">
        <rect>
         <x>385</x>
-        <y>0</y>
+        <y>-5</y>
         <width>166</width>
-        <height>16</height>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
@@ -551,9 +551,9 @@
       <property name="geometry">
        <rect>
         <x>25</x>
-        <y>0</y>
+        <y>-5</y>
         <width>131</width>
-        <height>16</height>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
@@ -733,7 +733,7 @@
      <widget class="QTextEdit" name="lblPhaseEncodeDirection">
       <property name="geometry">
        <rect>
-        <x>425</x>
+        <x>440</x>
         <y>35</y>
         <width>46</width>
         <height>19</height>
@@ -751,8 +751,8 @@
        <rect>
         <x>335</x>
         <y>25</y>
-        <width>81</width>
-        <height>41</height>
+        <width>106</width>
+        <height>46</height>
        </rect>
       </property>
       <property name="text">
@@ -963,7 +963,7 @@
      <widget class="QLabel" name="lblUpperLeft">
       <property name="geometry">
        <rect>
-        <x>585</x>
+        <x>595</x>
         <y>35</y>
         <width>131</width>
         <height>21</height>
@@ -990,8 +990,8 @@
      <widget class="QLabel" name="label_62">
       <property name="geometry">
        <rect>
-        <x>470</x>
-        <y>30</y>
+        <x>480</x>
+        <y>35</y>
         <width>116</width>
         <height>26</height>
        </rect>
@@ -1503,9 +1503,9 @@
      <widget class="QLabel" name="label_13">
       <property name="geometry">
        <rect>
-        <x>465</x>
+        <x>445</x>
         <y>0</y>
-        <width>87</width>
+        <width>116</width>
         <height>32</height>
        </rect>
       </property>
@@ -1540,8 +1540,8 @@
        <rect>
         <x>595</x>
         <y>0</y>
-        <width>60</width>
-        <height>16</height>
+        <width>71</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
@@ -1612,9 +1612,9 @@
       <property name="geometry">
        <rect>
         <x>61</x>
-        <y>6</y>
-        <width>43</width>
-        <height>16</height>
+        <y>1</y>
+        <width>56</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
@@ -1625,9 +1625,9 @@
       <property name="geometry">
        <rect>
         <x>129</x>
-        <y>6</y>
-        <width>42</width>
-        <height>16</height>
+        <y>1</y>
+        <width>56</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
@@ -1644,9 +1644,9 @@
       <property name="geometry">
        <rect>
         <x>197</x>
-        <y>6</y>
-        <width>39</width>
-        <height>16</height>
+        <y>1</y>
+        <width>51</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
@@ -1657,9 +1657,9 @@
       <property name="geometry">
        <rect>
         <x>264</x>
-        <y>6</y>
-        <width>45</width>
-        <height>16</height>
+        <y>1</y>
+        <width>56</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
@@ -1733,10 +1733,10 @@
      <widget class="QLabel" name="label_23">
       <property name="geometry">
        <rect>
-        <x>331</x>
-        <y>6</y>
-        <width>90</width>
-        <height>16</height>
+        <x>344</x>
+        <y>5</y>
+        <width>101</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
@@ -1770,8 +1770,8 @@
        <rect>
         <x>364</x>
         <y>30</y>
-        <width>29</width>
-        <height>19</height>
+        <width>41</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="frameShape">
@@ -1784,7 +1784,7 @@
      <widget class="QLabel" name="label_22">
       <property name="geometry">
        <rect>
-        <x>400</x>
+        <x>410</x>
         <y>30</y>
         <width>18</width>
         <height>16</height>
@@ -1803,10 +1803,10 @@
      <widget class="QTextEdit" name="lblPixelSpacingCol">
       <property name="geometry">
        <rect>
-        <x>425</x>
+        <x>435</x>
         <y>30</y>
-        <width>29</width>
-        <height>19</height>
+        <width>41</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="frameShape">
@@ -1917,7 +1917,7 @@
         <x>171</x>
         <y>81</y>
         <width>71</width>
-        <height>24</height>
+        <height>26</height>
        </rect>
       </property>
       <property name="frameShape">
@@ -1933,7 +1933,7 @@
         <x>249</x>
         <y>81</y>
         <width>70</width>
-        <height>24</height>
+        <height>26</height>
        </rect>
       </property>
       <property name="frameShape">
@@ -1949,7 +1949,7 @@
         <x>326</x>
         <y>81</y>
         <width>70</width>
-        <height>24</height>
+        <height>26</height>
        </rect>
       </property>
       <property name="frameShape">
@@ -1965,7 +1965,7 @@
         <x>403</x>
         <y>81</y>
         <width>70</width>
-        <height>24</height>
+        <height>26</height>
        </rect>
       </property>
       <property name="font">
@@ -1986,7 +1986,7 @@
         <x>480</x>
         <y>81</y>
         <width>70</width>
-        <height>24</height>
+        <height>26</height>
        </rect>
       </property>
       <property name="font">
@@ -2112,9 +2112,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>485</y>
+       <y>480</y>
        <width>736</width>
-       <height>106</height>
+       <height>111</height>
       </rect>
      </property>
      <property name="autoFillBackground">
@@ -2294,7 +2294,7 @@
       <property name="geometry">
        <rect>
         <x>155</x>
-        <y>10</y>
+        <y>5</y>
         <width>136</width>
         <height>36</height>
        </rect>
@@ -2733,10 +2733,10 @@
      <widget class="QLabel" name="label_39">
       <property name="geometry">
        <rect>
-        <x>155</x>
-        <y>45</y>
-        <width>96</width>
-        <height>31</height>
+        <x>150</x>
+        <y>40</y>
+        <width>106</width>
+        <height>41</height>
        </rect>
       </property>
       <property name="text">
@@ -2800,7 +2800,7 @@
       <property name="geometry">
        <rect>
         <x>300</x>
-        <y>10</y>
+        <y>5</y>
         <width>121</width>
         <height>36</height>
        </rect>
@@ -3242,9 +3242,9 @@
      <widget class="QLabel" name="label_53">
       <property name="geometry">
        <rect>
-        <x>300</x>
+        <x>290</x>
         <y>45</y>
-        <width>86</width>
+        <width>96</width>
         <height>21</height>
        </rect>
       </property>
@@ -3357,9 +3357,9 @@
      <widget class="QPushButton" name="pbReflectX">
       <property name="geometry">
        <rect>
-        <x>45</x>
-        <y>70</y>
-        <width>61</width>
+        <x>5</x>
+        <y>80</y>
+        <width>76</width>
         <height>28</height>
        </rect>
       </property>
@@ -3370,9 +3370,9 @@
      <widget class="QPushButton" name="pbReflectY">
       <property name="geometry">
        <rect>
-        <x>110</x>
-        <y>70</y>
-        <width>61</width>
+        <x>80</x>
+        <y>80</y>
+        <width>71</width>
         <height>28</height>
        </rect>
       </property>
@@ -3383,9 +3383,9 @@
      <widget class="QPushButton" name="pbReflectZ">
       <property name="geometry">
        <rect>
-        <x>175</x>
-        <y>70</y>
-        <width>61</width>
+        <x>150</x>
+        <y>80</y>
+        <width>71</width>
         <height>28</height>
        </rect>
       </property>
@@ -3396,9 +3396,9 @@
      <widget class="QPushButton" name="pbReflectZ_2">
       <property name="geometry">
        <rect>
-        <x>365</x>
-        <y>70</y>
-        <width>61</width>
+        <x>360</x>
+        <y>80</y>
+        <width>81</width>
         <height>28</height>
        </rect>
       </property>
@@ -3409,9 +3409,9 @@
      <widget class="QPushButton" name="pbReflectX_2">
       <property name="geometry">
        <rect>
-        <x>235</x>
-        <y>70</y>
-        <width>61</width>
+        <x>220</x>
+        <y>80</y>
+        <width>66</width>
         <height>28</height>
        </rect>
       </property>
@@ -3422,9 +3422,9 @@
      <widget class="QPushButton" name="pbReflectY_2">
       <property name="geometry">
        <rect>
-        <x>300</x>
-        <y>70</y>
-        <width>61</width>
+        <x>285</x>
+        <y>80</y>
+        <width>76</width>
         <height>28</height>
        </rect>
       </property>
@@ -3437,7 +3437,7 @@
        <rect>
         <x>565</x>
         <y>70</y>
-        <width>161</width>
+        <width>166</width>
         <height>31</height>
        </rect>
       </property>
@@ -3507,9 +3507,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>45</y>
-        <width>101</width>
-        <height>31</height>
+        <y>40</y>
+        <width>111</width>
+        <height>36</height>
        </rect>
       </property>
       <property name="text">
@@ -3520,9 +3520,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>10</y>
-        <width>101</width>
-        <height>31</height>
+        <y>5</y>
+        <width>111</width>
+        <height>36</height>
        </rect>
       </property>
       <property name="text">
@@ -3534,8 +3534,8 @@
        <rect>
         <x>10</x>
         <y>80</y>
-        <width>101</width>
-        <height>31</height>
+        <width>111</width>
+        <height>36</height>
        </rect>
       </property>
       <property name="text">
@@ -3545,7 +3545,7 @@
      <widget class="QGroupBox" name="groupBox_2">
       <property name="geometry">
        <rect>
-        <x>135</x>
+        <x>140</x>
         <y>10</y>
         <width>186</width>
         <height>71</height>
@@ -3590,9 +3590,9 @@
      <widget class="QGroupBox" name="groupBox_3">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>135</y>
-        <width>106</width>
+        <x>10</x>
+        <y>130</y>
+        <width>121</width>
         <height>81</height>
        </rect>
       </property>
@@ -3617,8 +3617,8 @@
         <rect>
          <x>5</x>
          <y>45</y>
-         <width>95</width>
-         <height>20</height>
+         <width>111</width>
+         <height>26</height>
         </rect>
        </property>
        <property name="text">

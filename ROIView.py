@@ -126,8 +126,8 @@ class ROIView(QtGui.QMainWindow):
     self.ui.rbEditSingleROI.clicked.connect(self.editSingleROI)
     self.ui.rbAllSlices.clicked.connect(self.allSlices)
     self.ui.rbSelectedSlice.clicked.connect(self.currentSlice)
-    self.ui.rbUseROIValues.clicked.connect(self.useROIValues)
-    self.ui.rbUseBestGuess.clicked.connect(self.useBestGuess)       
+    self.ui.rbUseROIValues.clicked.connect(self.useROIValues)   #flag self.useROIValues = True  use nominal values as initial guess
+    self.ui.rbUseBestGuess.clicked.connect(self.useBestGuess)    #flag self.useROIValues = False 
     self.ui.rbViewDicomHeader.toggled.connect(self.viewDicomHeader)
     self.ui.txtDicomHeader.setHidden(True)  #Image header normally hidden
     self.ui.chShowBackgroundROIs.clicked.connect(self.showROIs)
@@ -143,7 +143,7 @@ class ROIView(QtGui.QMainWindow):
     self.InitialROIs = VPhantom.ROISet("default")     #Current ROIs are initial ROIs with global rotation and translation
     self.currentROIs=copy.deepcopy(self.InitialROIs)
     self.currentROI = 1   #currently selected ROI
-    self.useROIValues = True    #flag to instruct fits to take initial guesses from the current ROI values
+    self.useROIValues = False    #flag to instruct fits to take initial guesses from the current ROI values
     self.pgROIs=[]  #list of pyqtgraph ROIs
     self.pgROIlabels = []   #List of labels that go with ROIs
     self.bShowROIs = False    #Flag to determine if ROIs are shown or hidden
@@ -365,12 +365,12 @@ class ROIView(QtGui.QMainWindow):
       self.ui.tabT1.setCurrentIndex(0)
     self.ui.lblTI.setStyleSheet("background-color: yellow") if self.TIvaries else self.ui.lblTI.setStyleSheet("background-color: white")    
     self.ui.lblTI.setText(str(self.ds.TI[i])) 
-    self.ui.lblSliceThickness.setText(str(self.ds.SliceThickness[i]))
+    self.ui.lblSliceThickness.setText("{:.2f}".format(self.ds.SliceThickness[i]))
     self.sliceLocationVaries = not(self.checkEqual(self.ds.SliceLocation))
     self.ui.lblSliceLocation.setStyleSheet("background-color: yellow") if self.sliceLocationVaries else self.ui.lblSliceLocation.setStyleSheet("background-color: white")
-    self.ui.lblSliceLocation.setText(str(self.ds.SliceLocation[i])) 
-    self.ui.lblPixelSpacingRow.setText(str(self.ds.PixelSpacingX[i])) 
-    self.ui.lblPixelSpacingCol.setText(str(self.ds.PixelSpacingY[i]))
+    self.ui.lblSliceLocation.setText("{:.2f}".format(self.ds.SliceLocation[i])) 
+    self.ui.lblPixelSpacingRow.setText("{:.2f}".format(self.ds.PixelSpacingX[i])) 
+    self.ui.lblPixelSpacingCol.setText("{:.2f}".format(self.ds.PixelSpacingY[i]))
     self.FAvaries =  not(self.checkEqual(self.ds.FA))
     if self.FAvaries:
       self.ui.tabT1.setCurrentIndex(1)
@@ -470,12 +470,10 @@ class ROIView(QtGui.QMainWindow):
     
   def useROIValues(self): 
     self.useROIValues = True 
-
-    
+  
   def useBestGuess(self): 
     self.useROIValues = False
-
-         
+       
   def resetROIs(self):
         self.currentROIs=copy.deepcopy(self.InitialROIs)
         self.theta=0.0
@@ -593,7 +591,7 @@ class ROIView(QtGui.QMainWindow):
       self.showROIs()   #redraw ROIs 
                                
   def savePhantomFile(self):
-      fileName = QtGui.QFileDialog.getSaveFileName(parent=None, caption="ROI File Name", directory = self.imageDirectory, selectedFilter = ".dat")
+      fileName = QtGui.QFileDialog.getSaveFileName(parent=None, caption="Save ROI File", directory = self.imageDirectory, selectedFilter = ".dat")
       if not fileName:  #if cancel is pressed return
         return None
       f= open(fileName, 'w')
@@ -630,7 +628,7 @@ class ROIView(QtGui.QMainWindow):
     self.resultsPlot.clear()
     self.resultsPlot.setLabel('bottom', "X Axis", units='s')
     self.resultsPlot.setTitle("Results")
-    self.resetROIs()
+#    self.resetROIs()
 
   def deleteCurrentImage(self):
     if self.nCurrentImage > 0:
@@ -797,6 +795,7 @@ class ROIView(QtGui.QMainWindow):
       return Label       
 
   def showRawData(self):
+    '''Plots ROI signal vs relevant parameter; outputs data in self.rdx and self.rdy'''
     self.ui.txtResults.clear()
     self.msgPrint (self.imageDirectory + "\n") 
     self.msgPrint ("Data Type = " + self.dataType + "\n") 
@@ -861,7 +860,7 @@ class ROIView(QtGui.QMainWindow):
         self.rdPlot.setLabel('bottom', "ROI")
         self.rdx = np.array([roi.Index for roi in self.currentROIs.ROIs])
 #PD Data
-    if self.dataType == "PD":
+    if self.dataType == "PD-SNR":
       self.rdPlot.setLogMode(x=False,y=False)
       self.rdx = np.array([roi.PD for roi in self.currentROIs.ROIs])
       self.msgPrint ( "PD(%)=")
@@ -1141,7 +1140,7 @@ class ROIView(QtGui.QMainWindow):
       self.setDataType(self.dataType)
          
   def PDSNRAnalysis(self):
-      self.dataType = "PD"
+      self.dataType = "PD-SNR"
       self.setDataType(self.dataType)
        
   def diffusionAnalysis(self):
@@ -1317,7 +1316,7 @@ class imageStackWindow(ROIView):
     self.phantomMenu.addAction(self.actionOpenPhantomFile)
     self.actionSavePhantomFile = QtGui.QAction('Save phantom file', self)
     self.actionSavePhantomFile.setStatusTip('Save phantom file')
-    self.actionSavePhantomFile.triggered.connect(rv.openPhantomFile)
+    self.actionSavePhantomFile.triggered.connect(rv.savePhantomFile)
     self.phantomMenu.addAction(self.actionSavePhantomFile)  
     
     self.actionSystemPhantom = QtGui.QAction('System Phantom', self)
