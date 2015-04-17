@@ -103,7 +103,7 @@ class ImageList():
           
   def addFile(self,fileName):
     extension = fileName.split(".")[-1]
-    if extension.toLower() == "dcm" or extension==fileName: #If there is no extension try dicom
+    if extension.toLower() == "dcm" or extension==fileName or extension.toLower() == "ima": #If there is no extension try dicom
         self.unpackImageFile (dicom.read_file(str(fileName)), fileName, "dcm")
     if extension.toLower() == "tif":
         #self.ds.PA.append(Image.open(str(fileName)))
