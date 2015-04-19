@@ -304,18 +304,26 @@ class ROIView(QtGui.QMainWindow):
     dialogBox.setCancelButton(None)
     for i in range(nFiles):
       fileName = self.fileNames[i]
-      self.ds.addFile(fileName)
-      d1.append(self.ds.PA[i+1])
-      dialogBox.setValue(i)
+      fstatus=self.ds.addFile(fileName)
+      if fstatus[0]:
+        d1.append(self.ds.PA[i+1])
+        dialogBox.setValue(i)
+      else:
+        self.msgPrint(fstatus[1])   #Could not open or read file
     self.sliceList = sorted(set(self.ds.SliceLocation))   #make an ordered list of slices
-    self.nImages=self.nImages+len(self.fileNames)
+    self.nImages=self.nImages+len(self.ds.FileName)-1
     self.ui.lblnImages.setText(str(self.nImages))
-    self.ui.vsImage.setMinimum(1)       #set slider to go from 1 to the number of images
+    if self.nImages < 1 :
+      limage = 0
+    else:
+      limage = 1
+    self.ui.vsImage.setMinimum(limage)       #set slider to go from 1 to the number of images
     self.ui.vsImage.setMaximum(self.nImages)
-    self.nCurrentImage=1
+    self.nCurrentImage=limage
     self.ui.vsImage.setValue(self.nCurrentImage)
     self.displayCurrentImage()
-    self.image3D= np.dstack(d1)
+    if len(d1)>0:
+      self.image3D= np.dstack(d1)
     self.imswin.show()
 
   def writeDicomFiles (self):

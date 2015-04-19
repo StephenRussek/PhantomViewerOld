@@ -20,7 +20,7 @@ except:
 import struct
 
 class ImageList():
-  'Class to contain a generic MR Image list; can accommodate DICOM, tif, fdf (Varian) files'
+  '''Class to contain a generic MR Image list; can accommodate DICOM, tif, fdf (Varian) files; first element in ImageList is a default image '''
   def __init__(self ,parent = None):    #all attributes are list of the same length, **all attributes have default value at 0**
     self.bValue = []
     self.bValue.append(0.0)
@@ -103,14 +103,20 @@ class ImageList():
           
   def addFile(self,fileName):
     extension = fileName.split(".")[-1]
-    if extension.toLower() == "dcm" or extension==fileName or extension.toLower() == "ima": #If there is no extension try dicom
-        self.unpackImageFile (dicom.read_file(str(fileName)), fileName, "dcm")
-    if extension.toLower() == "tif":
-        #self.ds.PA.append(Image.open(str(fileName)))
-        self.unpackImageFile (Image.open(str(fileName)), fileName, "tif")
-    if extension.toLower() == "fdf":
-        VData=VarianData()
-        self.unpackImageFile (VData.read(str(fileName)), fileName, "fdf")
+    try:
+      if extension.toLower() == "dcm" or extension==fileName or extension.toLower() == "ima": # if .dcm , .ima or  no extension try dicom
+          self.unpackImageFile (dicom.read_file(str(fileName)), fileName, "dcm")
+      elif extension.toLower() == "tif":
+          #self.ds.PA.append(Image.open(str(fileName)))
+          self.unpackImageFile (Image.open(str(fileName)), fileName, "tif")
+      elif extension.toLower() == "fdf":
+          VData=VarianData()
+          self.unpackImageFile (VData.read(str(fileName)), fileName, "fdf")
+      else:
+          self.unpackImageFile (dicom.read_file(str(fileName)), fileName, "dcm")    #if the extension cannot be recognized try DICOM
+    except:
+      return [False,"Image file cannot be opened:" + fileName]
+    return [True, fileName]
         
   def    writeDicomFiles(self, filename):         
         for i in range(1,len(self.PA)):     #Image 0 is a null image for default display and will not be written out
@@ -179,10 +185,12 @@ class ImageList():
     self.FileName.append(FileName)
     if fileType == "dcm": 
       self.header.append(str(ImageFile))
-    if fileType == "fdf":
+    elif fileType == "fdf":
       self.header.append(ImageFile.header)      
-    if fileType == "tif":
+    elif fileType == "tif":
       self.header.append("tif")
+    else:
+      self.header.append("file not recognized")
     b = 0.0
     if hasattr(ImageFile,"bValue"):   #b value can be in several tags
       b=ImageFile.bValue 
@@ -224,14 +232,17 @@ class ImageList():
     self.InPlanePhaseEncodingDirection.append(ImageFile.InplanePhaseEncodingDirection) if hasattr(ImageFile,"InPlanePhaseEncodingDirection") else self.InPlanePhaseEncodingDirection.append(0)    
     self.TI.append(ImageFile.InversionTime) if hasattr(ImageFile,"InversionTime") else self.TI.append(0.0) 
     self.SliceThickness.append(ImageFile.SliceThickness) if hasattr(ImageFile,"SliceThickness") else self.SliceThickness.append(0.0)    
-    self.SliceLocation.append(ImageFile.SliceLocation) if hasattr(ImageFile,"SliceLocation") else self.SliceLocation.append(0.0)    
-    if hasattr(ImageFile,"pixel_array"): #if data set is a dicom file display its pixel array
+    self.SliceLocation.append(ImageFile.SliceLocation) if hasattr(ImageFile,"SliceLocation") else self.SliceLocation.append(0.0)
+        
+    if fileType == "dcm": #if data set is a dicom file display its pixel array
         self.PA.append(np.transpose(ImageFile.pixel_array))  #???why transpose????
-    if fileType == "tif":
+    elif fileType == "tif":
         self.PA.append(np.array(ImageFile))
-    if fileType == "fdf":
+    elif fileType == "fdf":
         self.PA.append(ImageFile.PA)
-#          QtGui.QMessageBox.information(self, 'Display Image', 'Cannot read image data', buttons=QtGui.QMessageBox.Ok, defaultButton=QtGui.QMessageBox.Ok)
+    else:
+        self.PA.append(np.zeros([128,128]))
+
 # Phillips scaling corrections FP = (PV-SI)/SS = PV/SS where FP is the floating point value, PV is the pixel value, SI and SS are the scaled slope and intercept
 # SS is in [0x2005, 0x100E] and si is in [0x2005, 0x100D], both are single precision floats
     try:
