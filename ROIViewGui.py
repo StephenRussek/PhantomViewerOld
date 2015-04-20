@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ROIViewGui.ui'
 #
-# Created: Fri Apr 10 09:28:43 2015
+# Created: Sun Apr 19 19:56:40 2015
 #      by: PyQt4 UI code generator 4.9.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -1464,6 +1464,10 @@ class Ui_ROIViewGui(object):
         self.actionShowPhantomInfo.setObjectName(_fromUtf8("actionShowPhantomInfo"))
         self.actionSave_phantom_file = QtGui.QAction(ROIViewGui)
         self.actionSave_phantom_file.setObjectName(_fromUtf8("actionSave_phantom_file"))
+        self.actionView3D_color = QtGui.QAction(ROIViewGui)
+        self.actionView3D_color.setObjectName(_fromUtf8("actionView3D_color"))
+        self.actionView3D_transparency = QtGui.QAction(ROIViewGui)
+        self.actionView3D_transparency.setObjectName(_fromUtf8("actionView3D_transparency"))
         self.menuAnalysis.addSeparator()
         self.menuAnalysis.addAction(self.actionT1_Analysis)
         self.menuAnalysis.addAction(self.actionT2_Analysis)
@@ -1486,6 +1490,8 @@ class Ui_ROIViewGui(object):
         self.menuPhantom_properties.addAction(self.actionShowPhantomInfo)
         self.menuTools.addAction(self.action3dViewer)
         self.menuTools.addSeparator()
+        self.menuTools.addAction(self.actionView3D_color)
+        self.menuTools.addAction(self.actionView3D_transparency)
         self.menuFile.addAction(self.actionSelectImages)
         self.menuFile.addAction(self.actionClear_All_Images)
         self.menuFile.addAction(self.actionDelete_Current_Image)
@@ -1679,5 +1685,7 @@ class Ui_ROIViewGui(object):
         self.actionShowPhantomInfo.setText(QtGui.QApplication.translate("ROIViewGui", "Show current phantom info", None, QtGui.QApplication.UnicodeUTF8))
         self.actionShowPhantomInfo.setShortcut(QtGui.QApplication.translate("ROIViewGui", "Ctrl+P", None, QtGui.QApplication.UnicodeUTF8))
         self.actionSave_phantom_file.setText(QtGui.QApplication.translate("ROIViewGui", "Save phantom file", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionView3D_color.setText(QtGui.QApplication.translate("ROIViewGui", "View3D color", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionView3D_transparency.setText(QtGui.QApplication.translate("ROIViewGui", "View3D transparency", None, QtGui.QApplication.UnicodeUTF8))
 
 from pyqtgraph import PlotWidget

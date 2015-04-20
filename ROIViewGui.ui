@@ -4451,6 +4451,8 @@
     </property>
     <addaction name="action3dViewer"/>
     <addaction name="separator"/>
+    <addaction name="actionView3D_color"/>
+    <addaction name="actionView3D_transparency"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -4729,6 +4731,16 @@
   <action name="actionSave_phantom_file">
    <property name="text">
     <string>Save phantom file</string>
+   </property>
+  </action>
+  <action name="actionView3D_color">
+   <property name="text">
+    <string>View3D color</string>
+   </property>
+  </action>
+  <action name="actionView3D_transparency">
+   <property name="text">
+    <string>View3D transparency</string>
    </property>
   </action>
  </widget>

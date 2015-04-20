@@ -101,6 +101,8 @@ class ROIView(QtGui.QMainWindow):
     self.ui.actionProton_density_SNR.triggered.connect(self.PDSNRAnalysis)
     self.ui.actionDiffusion.triggered.connect(self.diffusionAnalysis)
     self.ui.action3dViewer.triggered.connect(self.View3d)
+    self.ui.actionView3D_color.triggered.connect(self.view3DColor)
+    self.ui.actionView3D_transparency.triggered.connect(self.view3DTransparency)
     self.ui.actionWrite_to_DICOM.triggered.connect(self.writeDicomFiles)
     self.ui.actionFitting_Results.triggered.connect(self.outputReport)
     self.ui.actionSave_Results.triggered.connect(self.saveReport)
@@ -135,7 +137,6 @@ class ROIView(QtGui.QMainWindow):
 #  setup regions of interest (ROIs)
     self.dataType = str(dt)    #string indicating data type "T1", "T2", "PD-SNR", DIF ; determines what fitting models are accessible
     self.setDataType(self.dataType)
-    print self.dataType
     self.ADCmap = False
     self.Phantom = VPhantom.VPhantom()
     self.ui.lblPhantomType.setText(self.Phantom.phantomName)
@@ -161,6 +162,10 @@ class ROIView(QtGui.QMainWindow):
     self.theta = 0.0                 #current rotation of the ROIs in radians
     self.bEditROISet = True   #flag to specify whether to edit ROI set or an individual ROI
     self.bAllSlices = False   #flag to specify if all slices will be analyzed or just currently selected one
+    self.view3DColor = QtGui.QColor(255, 255 ,255 , alpha=10)
+    self.view3DBackground = QtGui.QColor(155, 155 ,255 , alpha=10)
+    self.view3DTransparency = 1.75   #set transparency scaling for 3dview, 1 = transparency set by voxel value
+
 #global data structures
     self.rdy = np.array([0.,0.]) # 2d numpy array of raw data (usually signal averaged i= ROI j=image number in stack)
     self.rdx = np.array([0.]) # numpy array of imaging parameter that is varied ie TE, TI, FA etc; usually a 1d array (independent variable)
@@ -732,34 +737,49 @@ class ROIView(QtGui.QMainWindow):
   #   else:
   #     self.ui.txtResults.setHidden(True)
   #=============================================================================
-
+  def view3DColor(self):  
+    self.view3DColor = QtGui.QColorDialog.getColor()
+    self.View3d()
+    
+  def view3DTransparency(self):  
+    t = 15.
+    t , ok =  QtGui.QInputDialog.getInteger( None,'Transparency' , 'Enter value 1 (solid) to 100 transparent', value=15, min=1, max=100, step=1)
+    if ok:
+      self.view3DTransparency = t/10.0
+      self.View3d() 
+    
   def View3d(self):
-      w = gl.GLViewWidget()
-      w.opts['distance'] = 200
-      w.show()
-      w.setWindowTitle('3D View')
-      g = gl.GLGridItem()
-      g.scale(10, 10, 10)
-      w.addItem(g)   
-      data=self.image3D
-      #positive = np.log(np.clip(data, 0, data.max())**2)
-      #negative = np.log(np.clip(-data, 0, -data.min())**2)
-      d2 = np.empty(data.shape + (4,), dtype=np.ubyte)
-      d2[..., 0] = data * (255./data.max())
-      d2[..., 1] = data * (255./data.max())
-      d2[..., 2] = d2[...,1]
-      d2[..., 3] = d2[..., 0]*0.3 + d2[..., 1]*0.3
-      d2[..., 3] = (d2[..., 3].astype(float) / 255.) **2 * 255
-
-      d2[:, 0, 0] = [255,0,0,100]
-      d2[0, :, 0] = [0,255,0,100]
-      d2[0, 0, :] = [0,0,255,100]
-
-      v = gl.GLVolumeItem(d2)
-      v.translate(-128,-128,0)
-      w.addItem(v)        
+      '''creates 3d rendering of current image stack'''
+      if not hasattr(self,"view3Dwin"):   
+        self.view3Dwin = gl.GLViewWidget()
+        self.view3Dwin.opts['distance'] = 300
+        self.view3Dwin.resize(800,800)
+        self.view3Dwin.setWindowTitle('3D View ' )
+      self.view3Dwin.show()
+      try:
+         self.view3Dwin.removeItem(self.image3DVol)
+      except:
+        pass
       ax = gl.GLAxisItem()
-      w.addItem(ax)
+      self.view3Dwin.addItem(ax)
+#       g = gl.GLGridItem()
+#       g.scale(10, 10, 10)
+#       self.view3Dwin.addItem(g) 
+      data=self.image3D.astype(float) /float(self.image3D.max())  #normalize data to 1
+      d2 = np.empty(data.shape + (4,), dtype=np.ubyte)
+      d2[..., 0] = data * self.view3DColor.red()
+      d2[..., 1] = data * self.view3DColor.green()
+      d2[..., 2] = data * self.view3DColor.blue()
+      d2[..., 3] = (data)**self.view3DTransparency * 255.   #sets transparency  
+      d2[:, 0:3, 0:3] = [255,0,0,20]   #draw axes at corner of box 
+      d2[0:3, :, 0:3] = [0,255,0,20]
+      d2[0:3, 0:3, :] = [0,0,255,20]    
+      self.image3DVol=gl.GLVolumeItem(d2)
+      self.image3DVol.translate(-128,-128,-128)
+      self.view3Dwin.addItem(self.image3DVol)
+      #self.view3Dwin.update(self.geometry())      
+      #self.view3Dwin.repaint(self.geometry())
+        
 
   def mouseMoved(self,evt): 
     '''mouse move event to move crosshairs and display location and values'''
@@ -1304,6 +1324,8 @@ class imageStackWindow(ROIView):
     self.imv = pg.ImageView( view = pg.PlotItem())
     self.win.setCentralWidget(self.imv)
     self.win.setWindowTitle('Image Stack')
+    point = self.rect().topRight()
+    self.win.move(point + QtCore.QPoint(self.width()/2, 0)) 
     self.menu = self.win.menuBar()
     self.imageMenu = self.menu.addMenu('&Images')
     self.actionSelectImages = QtGui.QAction('Select/Add Images', self)
