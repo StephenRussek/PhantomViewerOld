@@ -36,8 +36,8 @@
      <property name="geometry">
       <rect>
        <x>5</x>
-       <y>100</y>
-       <width>736</width>
+       <y>105</y>
+       <width>740</width>
        <height>151</height>
       </rect>
      </property>
@@ -435,6 +435,22 @@
        <enum>Qt::ScrollBarAlwaysOff</enum>
       </property>
      </widget>
+     <widget class="QCheckBox" name="cbOperateOnAllImages">
+      <property name="geometry">
+       <rect>
+        <x>490</x>
+        <y>115</y>
+        <width>161</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Operate on All Images</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
      <zorder>label_3</zorder>
      <zorder>lblSeries</zorder>
      <zorder>lblDate</zorder>
@@ -460,13 +476,14 @@
      <zorder>rbViewDicomHeader</zorder>
      <zorder>label_42</zorder>
      <zorder>lblTransmitCoil</zorder>
+     <zorder>cbOperateOnAllImages</zorder>
     </widget>
     <widget class="QTextEdit" name="txtResults">
      <property name="geometry">
       <rect>
        <x>5</x>
        <y>605</y>
-       <width>741</width>
+       <width>740</width>
        <height>226</height>
       </rect>
      </property>
@@ -504,13 +521,16 @@
      <property name="geometry">
       <rect>
        <x>5</x>
-       <y>5</y>
-       <width>746</width>
-       <height>86</height>
+       <y>0</y>
+       <width>740</width>
+       <height>100</height>
       </rect>
      </property>
+     <property name="autoFillBackground">
+      <bool>true</bool>
+     </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::WinPanel</enum>
      </property>
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
@@ -518,10 +538,10 @@
      <widget class="QLabel" name="label_2">
       <property name="geometry">
        <rect>
-        <x>385</x>
+        <x>390</x>
         <y>-5</y>
-        <width>166</width>
-        <height>21</height>
+        <width>171</width>
+        <height>31</height>
        </rect>
       </property>
       <property name="text">
@@ -532,7 +552,7 @@
       <property name="geometry">
        <rect>
         <x>315</x>
-        <y>15</y>
+        <y>20</y>
         <width>421</width>
         <height>76</height>
        </rect>
@@ -550,8 +570,8 @@
      <widget class="QLabel" name="label_26">
       <property name="geometry">
        <rect>
-        <x>25</x>
-        <y>-5</y>
+        <x>20</x>
+        <y>5</y>
         <width>131</width>
         <height>21</height>
        </rect>
@@ -564,7 +584,7 @@
       <property name="geometry">
        <rect>
         <x>15</x>
-        <y>15</y>
+        <y>25</y>
         <width>296</width>
         <height>26</height>
        </rect>
@@ -624,7 +644,7 @@
       <rect>
        <x>5</x>
        <y>260</y>
-       <width>736</width>
+       <width>740</width>
        <height>71</height>
       </rect>
      </property>
@@ -1010,9 +1030,9 @@
     <widget class="QFrame" name="frmImageParameters">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>340</y>
-       <width>731</width>
+       <x>5</x>
+       <y>335</y>
+       <width>740</width>
        <height>136</height>
       </rect>
      </property>
@@ -1485,6 +1505,9 @@
       </property>
      </widget>
      <widget class="QTextEdit" name="lblColumns">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>665</x>
@@ -1520,6 +1543,9 @@
       </property>
      </widget>
      <widget class="QTextEdit" name="lblRows">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>585</x>
@@ -1766,6 +1792,9 @@
       </property>
      </widget>
      <widget class="QTextEdit" name="lblPixelSpacingRow">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>364</x>
@@ -1801,6 +1830,9 @@
       </property>
      </widget>
      <widget class="QTextEdit" name="lblPixelSpacingCol">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>435</x>
@@ -2111,9 +2143,9 @@
     <widget class="QFrame" name="frame_7">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>480</y>
-       <width>736</width>
+       <x>5</x>
+       <y>475</y>
+       <width>740</width>
        <height>111</height>
       </rect>
      </property>
@@ -4394,11 +4426,6 @@
       <enum>QFrame::WinPanel</enum>
      </property>
     </widget>
-    <zorder>txtDicomHeader</zorder>
-    <zorder>frame_6</zorder>
-    <zorder>lblRdLegend</zorder>
-    <zorder>stackedModels</zorder>
-    <zorder>layoutWidget</zorder>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -4407,7 +4434,7 @@
      <x>0</x>
      <y>0</y>
      <width>1617</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuAnalysis">
@@ -4422,6 +4449,7 @@
     <addaction name="actionPhase_Unwrap"/>
     <addaction name="actionPlane_Background_Subtract"/>
     <addaction name="actionParabola_Background_Subtract"/>
+    <addaction name="actionImage_Subtraction"/>
    </widget>
    <widget class="QMenu" name="menu_Instructions">
     <property name="title">
@@ -4453,6 +4481,7 @@
     <addaction name="separator"/>
     <addaction name="actionView3D_color"/>
     <addaction name="actionView3D_transparency"/>
+    <addaction name="actionView3D_invert_image"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -4461,7 +4490,10 @@
     <addaction name="actionSelectImages"/>
     <addaction name="actionClear_All_Images"/>
     <addaction name="actionDelete_Current_Image"/>
+    <addaction name="actionSort_on_Slice_Loc"/>
+    <addaction name="actionSort_on_TE"/>
     <addaction name="actionWrite_to_DICOM"/>
+    <addaction name="actionWrite_Animated_GIF"/>
    </widget>
    <widget class="QMenu" name="menuROIs">
     <property name="title">
@@ -4586,9 +4618,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
-   </property>
-   <property name="softKeyRole">
-    <enum>QAction::NegativeSoftKey</enum>
    </property>
   </action>
   <action name="actionClear_All_Images">
@@ -4741,6 +4770,31 @@
   <action name="actionView3D_transparency">
    <property name="text">
     <string>View3D transparency</string>
+   </property>
+  </action>
+  <action name="actionImage_Subtraction">
+   <property name="text">
+    <string>Image Subtraction</string>
+   </property>
+  </action>
+  <action name="actionWrite_Animated_GIF">
+   <property name="text">
+    <string>Write Animated GIF</string>
+   </property>
+  </action>
+  <action name="actionView3D_invert_image">
+   <property name="text">
+    <string>View3D invert image</string>
+   </property>
+  </action>
+  <action name="actionSort_on_Slice_Loc">
+   <property name="text">
+    <string>Sort on Slice Loc</string>
+   </property>
+  </action>
+  <action name="actionSort_on_TE">
+   <property name="text">
+    <string>Sort on TE</string>
    </property>
   </action>
  </widget>

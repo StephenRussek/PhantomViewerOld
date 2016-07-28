@@ -1,38 +1,50 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Oct 11 16:30:54 2013
-Class to display and analyze phantom data
-modules required pydicom : pip install pydicom --upgrade
+Class to display and analyze phantom data, mostly MRI data
+modules required (most can be installed using 'pip install package' or  'pip install package --upgrade':
+   Python 2.7.11    (64 bit is better, Python, PyQT4, Numpy can be installed easier using the Anaconda build)
+   pydicom Version: 0.9.9: 
+   pyqtgraph Version: 0.9.10
+   lmfit Version: 0.9.0    Used for fitting routines
+   unwrap Version: 0.1.1
+   scikit-image  Version: 0.11.3: uses unwrap_phase from skimage.resoration
+   PyOpenGL    Used for 3D plotting
+
 Uses ROIViewGui created from ROIViewGui.ui by QT4
   execute   "pyuic4 ROIViewGui.ui -o ROIViewGui.py" from system shell to regenerate ROIViewGui.py from ROIViewGui.ui
 @author: Stephen Russek
 Units: times in ms, distances in mm, ADC in mm2/s, Temperature in C, 
-last modification: 2-21-15
+last modification: 12-25-15
 """
+
 import sys
 import os     #operating system file/directory names
-import copy   #copies objects eg ROIsets     
-from PyQt4 import QtGui, QtCore
-from ROIViewGui import Ui_ROIViewGui
-import ROIProperties, ROIInfo, PhantomProperties
-import DICOMDIRlist
-import VPhantom, SystemPhantom, DiffusionPhantom,NISThcpPhantom, NISTKTPhantom, NISThcpCoronalPhantom
+import copy   #copies objects eg ROIsets
+import time # use for time, date and sleep
 import numpy as np
-import numpy.ma as ma   #masked arrays eg ROI arrays
-import dicom    #import pydicom to read data sets and DICOMDIR
-import pyqtgraph as pg
+import numpy.ma as ma   #masked arrays eg ROI arrays     
+from PyQt4 import QtGui, QtCore
+import dicom    #import pydicom to read DICOM data sets and DICOMDIR
+import pyqtgraph as pg    #uses pyqtgraph PlotWidget for graphs and ImageView windows for images, http://www.pyqtgraph.org/documentation/introduction.html
 import pyqtgraph.opengl as gl
 import pyqtgraph.functions as fn
-import time # use for time, date and sleep
 import lmfit  #used for nonlinear least square fits,builds on Levenberg-Marquardt algorithm of scipy.optimize.leastsq(),
+try:
+    from unwrap import unwrap   #package for phase unwrapping https://pypi.python.org/pypi/unwrap 
+except:
+  pass
+from skimage.restoration import unwrap_phase
+
+#PhantomViewer modules
+from ROIViewGui import Ui_ROIViewGui    #main window Gui
+import ROIProperties, ROIInfo, PhantomProperties
 import T1IRabs, T1VFA, T1VTR, T2SE, DifModel # models for data fitting
 import Report, Info
 import FitPlots   #Plot window to compare data to fits
 import ImageList  #class to make an image list from a stack of image files
-try:
-    from unwrap import unwrap   #package for phase unwrapping
-except:
-  pass
+import DICOMDIRlist
+import VPhantom, SystemPhantom, DiffusionPhantom,NISThcpPhantom, NISTKTPhantom, NISThcpCoronalPhantom
 
 class ROIView(QtGui.QMainWindow):
   """Main ROI viewing window, customized for different analysis eg geometric distortion, T1, T2, SNR etc"""
@@ -42,8 +54,8 @@ class ROIView(QtGui.QMainWindow):
     pg.setConfigOption('foreground', 'w')
     self.ui = Ui_ROIViewGui()
     self.ui.setupUi(self)
-    self.modDate = '2/1/2015'
-    self.wTitle = "PhantomViewer: " 
+    self.modDate = '12/25/2015'
+    self.wTitle = "PhantomViewer "  + self.modDate + ': '
     self.setWindowTitle(self.wTitle)
     self.nImages=0
     self.nCurrentImage=0
@@ -76,11 +88,15 @@ class ROIView(QtGui.QMainWindow):
     self.image3D = np.array ([1,1]) 
 #signals and slots
 # Menu items
+#Images
     self.ui.actionSelectImages.triggered.connect(self.openFile)
     #self.imwinOpenImages.addAction(self.openFile)    
     self.ui.actionClear_All_Images.triggered.connect(self.clearImages)
     self.ui.actionDelete_Current_Image.triggered.connect(self.deleteCurrentImage)
-    
+    self.ui.actionSort_on_Slice_Loc.triggered.connect(self.sortOnSliceLoc)
+    self.ui.actionSort_on_TE.triggered.connect(self.sortOnTE)
+    self.ui.actionWrite_Animated_GIF.triggered.connect(self.writeAnimatedGIF)
+#Phantoms    
     self.ui.actionOpenPhantomFile.triggered.connect(self.openPhantomFile)
     self.ui.actionSystem_Phantom.triggered.connect(self.SystemPhantom)
     self.ui.actionDiffusion_Phantom.triggered.connect(self.DiffusionPhantom)
@@ -90,29 +106,33 @@ class ROIView(QtGui.QMainWindow):
     self.ui.actionNIST_KT_Phantom.triggered.connect(self.NISTKTPhantom)
     self.ui.actionShowPhantomInfo.triggered.connect(self.showPhantomProperties)
     self.ui.actionSave_phantom_file.triggered.connect(self.savePhantomFile) 
-       
+#ROIs       
     self.ui.actionOpen_ROI_File.triggered.connect(self.openROIFile)    
     self.ui.actionShow_ROI_Properties.triggered.connect(self.showROIInfo)
     self.ui.actionShowHide_ROIs.triggered.connect(self.toggleShowROIs)
-    self.ui.actionReset_ROIs.triggered.connect(self.resetROIs) 
-
+    self.ui.actionReset_ROIs.triggered.connect(self.resetROIs)
+    self.ui.actionROI_Color.triggered.connect(self.ROIColor) 
+#Analysis
     self.ui.actionT1_Analysis.triggered.connect(self.T1Analysis)
     self.ui.actionT2_Analysis.triggered.connect(self.T2Analysis)
     self.ui.actionProton_density_SNR.triggered.connect(self.PDSNRAnalysis)
     self.ui.actionDiffusion.triggered.connect(self.diffusionAnalysis)
+    self.ui.actionPhase_Unwrap.triggered.connect(self.unWrapCurrentImage)
+    self.ui.actionPlane_Background_Subtract.triggered.connect(self.planeBackgroundSubtract)
+    self.ui.actionParabola_Background_Subtract.triggered.connect(self.ParabolaBackgroundSubtract)    
+    self.ui.actionImage_Subtraction.triggered.connect(self.imageSubtraction)
+#Tools
     self.ui.action3dViewer.triggered.connect(self.View3d)
     self.ui.actionView3D_color.triggered.connect(self.view3DColor)
     self.ui.actionView3D_transparency.triggered.connect(self.view3DTransparency)
+    self.ui.actionView3D_invert_image.triggered.connect(self.view3Dinvert)
     self.ui.actionWrite_to_DICOM.triggered.connect(self.writeDicomFiles)
     self.ui.actionFitting_Results.triggered.connect(self.outputReport)
     self.ui.actionSave_Results.triggered.connect(self.saveReport)
     self.ui.actionClear_Report.triggered.connect(self.clearReport)
     self.ui.txtDicomHeader.setHidden(False)
     self.ui.txtResults.setHidden(False)
-    self.ui.actionPhase_Unwrap.triggered.connect(self.unWrapCurrentImage)
-    self.ui.actionPlane_Background_Subtract.triggered.connect(self.planeBackgroundSubtract)
-    self.ui.actionParabola_Background_Subtract.triggered.connect(self.ParabolaBackgroundSubtract)
-    self.ui.actionROI_Color.triggered.connect(self.ROIColor)
+
 #  push buttons and sliders
     self.ui.hsROISet.valueChanged.connect(self.changeROISet)
     self.ui.vsImage.valueChanged.connect(self.imageSlider)
@@ -134,6 +154,11 @@ class ROIView(QtGui.QMainWindow):
     self.ui.txtDicomHeader.setHidden(True)  #Image header normally hidden
     self.ui.chShowBackgroundROIs.clicked.connect(self.showROIs)
     #self.ui.rbViewMessages.toggled.connect(self.viewMessages)
+    self.ui.lblTE.textChanged.connect(self.TEChanged)
+    self.TEChangedFlag = True   #flag to input new TE values
+    self.ui.lblTR.textChanged.connect(self.TRChanged)
+    self.TRChangedFlag = True   #flag to input new TR values
+       
 #  setup regions of interest (ROIs)
     self.dataType = str(dt)    #string indicating data type "T1", "T2", "PD-SNR", DIF ; determines what fitting models are accessible
     self.setDataType(self.dataType)
@@ -154,7 +179,7 @@ class ROIView(QtGui.QMainWindow):
     self.lblFont.setPixelSize(18)
     self.bShowSNRROIs = False    #flag to show SNR ROIs to measure background signal; used to determine points that are in the background
     self.bSNRROIs  = False      #flag to indicate SNR ROIs are plotted
-    self.snrPen = pg.mkPen('y', width=3)
+    self.snrPen = pg.mkPen('c', width=3)
     self.ROItrans=np.array([0,0,0], float)  #ROI translation
     self.bResetROIs = True  #flag to reset ROIs to initials positions
     self.relativeOffseth = 0.0  #horizontal and vertical offsets of the ROI positions
@@ -165,6 +190,7 @@ class ROIView(QtGui.QMainWindow):
     self.view3DColor = QtGui.QColor(255, 255 ,255 , alpha=10)
     self.view3DBackground = QtGui.QColor(155, 155 ,255 , alpha=10)
     self.view3DTransparency = 1.75   #set transparency scaling for 3dview, 1 = transparency set by voxel value
+    self.view3Dinvert = False    #flag to invert contrast in 3d image
 
 #global data structures
     self.rdy = np.array([0.,0.]) # 2d numpy array of raw data (usually signal averaged i= ROI j=image number in stack)
@@ -180,7 +206,9 @@ class ROIView(QtGui.QMainWindow):
     self.imageDirectory = '' #last opened image directory
     self.showReferenceValues = True   #flag to show reference parameter values listed in phantom type or ROI file
     self.sliceList = []    #ordered list of slices in the current image stack
-
+    self.reverseSliceOrder = False    #flag to reverse slice order
+    self.reverseTEOrder = False    #flag to reverse TE order
+    
   def setupPhantom(self, phantom):
     self.Phantom=phantom
     self.ui.lblPhantomType.setText(self.Phantom.phantomName)
@@ -316,7 +344,7 @@ class ROIView(QtGui.QMainWindow):
       else:
         self.msgPrint(fstatus[1])   #Could not open or read file
     self.sliceList = sorted(set(self.ds.SliceLocation))   #make an ordered list of slices
-    self.nImages=self.nImages+len(self.ds.FileName)-1
+    self.nImages=len(self.ds.FileName)-1
     self.ui.lblnImages.setText(str(self.nImages))
     if self.nImages < 1 :
       limage = 0
@@ -335,8 +363,14 @@ class ROIView(QtGui.QMainWindow):
     fileName = QtGui.QFileDialog.getSaveFileName(parent=None, caption="Dicom File Name")
     if not fileName:  #if cancel is pressed return
       return None
-    self.ds.writeDicomFiles(fileName)   #write current image list in DICOM format to filename+ imagenumber + .dcm
-         
+    self.ds.writeDicomFiles(str(fileName))   #write current image list in DICOM format to filename+ imagenumber + .dcm
+
+  def writeAnimatedGIF (self):
+    fileName = QtGui.QFileDialog.getSaveFileName(parent=None, caption="GIF File Name")
+    if not fileName:  #if cancel is pressed return
+      return None
+    self.ds.writeAnimatedGIF(fileName)   #write current image list to GIF
+             
   def changeROISet (self):
     self.InitialROIs =self.Phantom.ROIsets[self.ui.hsROISet.value()]
     self.ui.lblROISet.setText(self.InitialROIs.ROIName)
@@ -438,8 +472,16 @@ class ROIView(QtGui.QMainWindow):
         for roi in self.pgROIs:
             self.imv.getView().addItem(roi)
             self.imv.getView().addItem(roi.label)
-        if hasattr(self.Phantom, "SNRROIs") and self.bShowSNRROIs:
+        if self.currentROIs.showBackgroundROI:
             roi=self.Phantom.SNRROIs.ROIs[0]
+            r=np.array([roi.Xcenter,roi.Ycenter,roi.Zcenter])
+            imCoord=self.GlobaltoRel(r,self.nCurrentImage)
+            bgroi=fCircleROI(self,[imCoord[0]-roi.d1/2, imCoord[1]-roi.d1/2], [roi.d1, roi.d1],"SNR", pen=self.snrPen)
+            self.imv.getView().addItem(bgroi)
+            self.bgROI=bgroi
+            self.bSNRROIs=True
+        if self.currentROIs.showSNRROI:
+            roi=self.Phantom.SNRROIs.ROIs[1]
             r=np.array([roi.Xcenter,roi.Ycenter,roi.Zcenter])
             imCoord=self.GlobaltoRel(r,self.nCurrentImage)
             snrroi=fCircleROI(self,[imCoord[0]-roi.d1/2, imCoord[1]-roi.d1/2], [roi.d1, roi.d1],"SNR", pen=self.snrPen)
@@ -657,23 +699,57 @@ class ROIView(QtGui.QMainWindow):
       self.ui.vsImage.setValue(self.nCurrentImage)
       self.displayCurrentImage()
 
+  def sortOnSliceLoc(self):
+    self.ds.sortImageList(self.ds.SliceLocation)
+    self.displayCurrentImage()
+    self.msgPrint('Images reorderd by slice location\n')
+     
+  def sortOnTE(self):
+    self.ds.sortImageList(self.ds.TE)
+    self.displayCurrentImage()
+    self.msgPrint('Images reorderd by TE\n')
+    self.reverseTEOrder = not self.reverseTEOrder  #toggle order 
+         
   def unWrapCurrentImage(self):
+    '''unwraps a phase image using '''
+    self.operateOnAll=self.ui.cbOperateOnAllImages.isChecked()
     if self.nCurrentImage > 0:
-      self.ds.PA[self.nCurrentImage] = unwrap(self.ds.PA[self.nCurrentImage],wrap_around_axis_0=False, wrap_around_axis_1=False,wrap_around_axis_2=False)
+      if self.operateOnAll == False:
+        self.ds.PA[self.nCurrentImage] = unwrap(self.ds.PA[self.nCurrentImage],wrap_around_axis_0=False, wrap_around_axis_1=False,wrap_around_axis_2=False)
+      if self.operateOnAll == True:
+        for i in range(1,len(self.ds.PA)):
+          #self.ds.PA[i] = unwrap(self.ds.PA[i],wrap_around_axis_0=False, wrap_around_axis_1=False,wrap_around_axis_2=False)
+          self.ds.PA[i] =unwrap_phase(self.ds.PA[i])    #From SKIMAGE should be similar to unwrap
       self.displayCurrentImage() 
-
-  def planeBackgroundSubtract(self):   
+          
+  def planeBackgroundSubtract(self):
+    '''subtracts a plane defined by 3 points set by the previous mouse clicks'''   
+    self.operateOnAll=self.ui.cbOperateOnAllImages.isChecked()
     r1=self.clickArray[-3]
     r2=self.clickArray[-2]
     r3=self.clickArray[-1]
-    a=np.cross(r2-r1,r3-r1)
-    an=np.linalg.norm(a)
-    a=a/an
-    plane=np.zeros([self.ds.Rows[self.nCurrentImage],self.ds.Columns[self.nCurrentImage]])
-    for i in range(int(self.ds.Rows[self.nCurrentImage])):
+    if self.operateOnAll == False:
+      a=np.cross(r2-r1,r3-r1)
+      an=np.linalg.norm(a)
+      a=a/an
+      plane=np.zeros([self.ds.Rows[self.nCurrentImage],self.ds.Columns[self.nCurrentImage]])
+      for i in range(int(self.ds.Rows[self.nCurrentImage])):
         for j in range(int(self.ds.Columns[self.nCurrentImage])):
           plane[i,j]=(-a[0]*(i-r1[0])-a[1]*(j-r1[1]))/a[2]+r1[2]
-    self.ds.PA[self.nCurrentImage]=self.ds.PA[self.nCurrentImage]-plane
+      self.ds.PA[self.nCurrentImage]=self.ds.PA[self.nCurrentImage]-plane
+    if self.operateOnAll == True:
+        for ii in range(1,len(self.ds.PA)):    #Subtract planar background from all images
+          r1[2]=self.ds.PA[ii][int(r1[0]),int(r1[1])] #set value of three in plane vectors
+          r2[2]=self.ds.PA[ii][int(r2[0]),int(r2[1])]
+          r3[2]=self.ds.PA[ii][int(r3[0]),int(r3[1])]
+          a=np.cross(r2-r1,r3-r1)
+          an=np.linalg.norm(a)
+          a=a/an
+          plane=np.zeros([self.ds.Rows[ii],self.ds.Columns[ii]])
+          for i in range(int(self.ds.Rows[ii])):
+            for j in range(int(self.ds.Columns[ii])):
+              plane[i,j]=(-a[0]*(i-r1[0])-a[1]*(j-r1[1]))/a[2]+r1[2]
+          self.ds.PA[ii]=self.ds.PA[ii]-plane
     self.displayCurrentImage()  
 
   def ParabolaBackgroundSubtract(self):   
@@ -689,10 +765,10 @@ class ROIView(QtGui.QMainWindow):
     Sav=(z1+z2)/2
     d=np.linalg.norm(np.cross((r2-r1),(r3-r1))/np.linalg.norm(r2-r1))
     a=(Sav-z3)/d**2
-    print ("a= " + str(a))
-    print ("Sav= " + str(Sav))
-    print ("d= " + str(d))
-    print ( str(z1) + str(z2)+str(z3))
+    #print ("a= " + str(a))
+    #print ("Sav= " + str(Sav))
+    #print ("d= " + str(d))
+    #print ( str(z1) + str(z2)+str(z3))
 #    self.PBGSubtract.setText("r1,r2,r3 = " +str(r1) + str(r2)+ str(r3))
 #    self.PBGSubtract.setModal(True)
 #    self.PBGSubtract.show()
@@ -704,8 +780,17 @@ class ROIView(QtGui.QMainWindow):
           parab[i,j]=a*d**2
     self.ds.PA[self.nCurrentImage]=self.ds.PA[self.nCurrentImage]+parab
     self.displayCurrentImage()  
-        
+ 
+  def imageSubtraction(self):
+    text, ok = QtGui.QInputDialog.getText(self, 'Image Subtraction', 'Image number to be subtracted:')
+    iscale=1.
+    i=int(text)
+    if ok and i > 0 and i < len(self.ds.PA)-1:
+      self.ds.PA[self.nCurrentImage]=self.ds.PA[self.nCurrentImage]- iscale*self.ds.PA[i]
+      self.displayCurrentImage()
+           
   def mouseClicked(self, evt):
+    '''Adds points to point array used for analysis and background subtraction, adds or subtracts ROI'''
     pos = evt[0]  ## using signal proxy turns original arguments into a tuple
     mousePoint = self.imv.view.vb.mapSceneToView(pos.scenePos())
     if abs(mousePoint.x()) < self.ds.FoVX[self.nCurrentImage]/2 and abs(mousePoint.y()) < self.ds.FoVY[self.nCurrentImage]/2:
@@ -747,6 +832,10 @@ class ROIView(QtGui.QMainWindow):
     if ok:
       self.view3DTransparency = t/10.0
       self.View3d() 
+  
+  def view3Dinvert(self):  
+    self.view3Dinvert = not self.view3Dinvert
+    self.View3d()
     
   def View3d(self):
       '''creates 3d rendering of current image stack'''
@@ -766,6 +855,8 @@ class ROIView(QtGui.QMainWindow):
 #       g.scale(10, 10, 10)
 #       self.view3Dwin.addItem(g) 
       data=self.image3D.astype(float) /float(self.image3D.max())  #normalize data to 1
+      if self.view3Dinvert :
+        data=1-data
       d2 = np.empty(data.shape + (4,), dtype=np.ubyte)
       d2[..., 0] = data * self.view3DColor.red()
       d2[..., 1] = data * self.view3DColor.green()
@@ -901,27 +992,36 @@ class ROIView(QtGui.QMainWindow):
       for j, pa in enumerate([self.ds.PA[k] for k in self.reducedImageSet]):
         array = roi.getArrayRegion(pa,self.imv.getImageItem())    
         rd[i ,j]= (array.mean()-self.ds.ScaleIntercept[self.reducedImageSet[j]])/self.ds.ScaleSlope[self.reducedImageSet[j]] #corrects for scaling in Phillips data
-        self.msgPrint ( "{:12.1f}".format(rd[i,j]) )
+        self.msgPrint ( "{:12.3f}".format(rd[i,j]) )
       c = self.rgb_to_hex(self.setPlotColor(i))
       if self.dataType in ["T1" , "T2", "Dif"] and not self.ADCmap:
         self.rdPlot.plot(self.rdx, rd[i,:],pen=self.setPlotColor(i),symbolBrush=self.setPlotColor(i), symbolPen='w', name=self.currentROIs.ROIs[i].Name)    
         self.ui.lblRdLegend.insertHtml('<font size="5" color=' + c + '>' + u"\u25CF" + '</font>' + self.currentROIs.ROIs[i].Name + '<BR>'  )  #u"\u25CF"  + '<BR>' 
       self.msgPrint (os.linesep)
-    if self.dataType == "PD": #raw data is a 1d array signal vs ROI.PD
-        self.rdPlot.plot(self.rdx, rd[:,0],pen=self.setPlotColor(0),symbolBrush=self.setPlotColor(0), symbolPen='w', name=self.currentROIs.ROIs[0].Name)
+    if self.dataType == "PD-SNR": #raw data is a 1d array signal vs ROI.PD
+      for k in range(len(self.reducedImageSet)):
+        self.rdPlot.plot(self.rdx, rd[:,k],pen=self.setPlotColor(k),symbolBrush=self.setPlotColor(0), symbolPen='w', name=self.currentROIs.ROIs[0].Name)
     if self.dataType == "Dif" and self.ADCmap: #raw data is a 1d array signal vs ROI.Index
         for k in range(len(self.reducedImageSet)):
           self.rdPlot.plot(self.rdx, rd[:,k],pen=self.setPlotColor(0),symbolBrush=self.setPlotColor(0), symbolPen='w', name=self.currentROIs.ROIs[0].Name)    
     self.rdy = rd   #returns a numpy array of raw data
     self.background=0 #set background counts for fits
-    if hasattr(self.Phantom, "SNRROIs"):    #obtain background from signal free region (SNR ROI)
+    if self.currentROIs.showBackgroundROI:    #obtain background from signal free region (SNR ROI)
       self.rdBackground=np.zeros(len(self.reducedImageSet))
       for j, pa in enumerate([self.ds.PA[k] for k in self.reducedImageSet]):
-        roi=self.snrROI
+        roi=self.bgROI
         array = roi.getArrayRegion(pa,self.imv.getImageItem())
         self.rdBackground[j]= (np.average(array)-self.ds.ScaleIntercept[self.reducedImageSet[j]])/self.ds.ScaleSlope[self.reducedImageSet[j]] 
       self.background=np.average(self.rdBackground)
       self.ui.lblBackGround.setText(str(self.background))
+    if self.currentROIs.showSNRROI:    #obtain noise from signal region by subtraction of two images
+      self.rdNoise=np.zeros(len(self.reducedImageSet))
+      for j, pa in enumerate([self.ds.PA[k] for k in self.reducedImageSet]):
+        roi=self.snrROI
+        array = roi.getArrayRegion(pa,self.imv.getImageItem())
+        self.rdNoise[j]= (np.average(array)-self.ds.ScaleIntercept[self.reducedImageSet[j]])/self.ds.ScaleSlope[self.reducedImageSet[j]] 
+      self.noise=self.rdNoise[1]-self.rdNoise[0]
+      self.msgPrint('noise = ' + str(self.noise))
        
   def fitData(self):
       if self.dataType == "T1":
@@ -968,9 +1068,10 @@ class ROIView(QtGui.QMainWindow):
       sr = "Diffusion fitting details" + "\n"
       for i, roi in enumerate(self.pgROIs):
           params=DifModel.initializeDifModel (i,bValue, data[i,:],self.currentROIs.ROIs[i], self.useROIValues, self.background)
-          pdict=params[0] #parameter dictionary
+          pdicti=params[0] #parameter dictionary
           plist=params[1] #parameter list   
-          out = lmfit.minimize(DifModel.DifModel,pdict,args=(bValue,data[i,:]))
+          out = lmfit.minimize(DifModel.DifModel,pdicti,args=(bValue,data[i,:]))
+          pdict=out.params
           self.fity[i:]= DifModel.DifModel(pdict, self.fitx, np.zeros(len(self.fitx)))
           self.msgPrint ("{:02d}".format(i+1)+ " " )
           sr = sr + "ROI " + "{:02d}".format(i+1)+os.linesep  #build output report text for detailed fitting info
@@ -1007,11 +1108,12 @@ class ROIView(QtGui.QMainWindow):
       sr = "T2-SE fitting details" + "\n"
       for i, roi in enumerate(self.pgROIs):
           params=T2SE.initializeT2SE (i,TE, data[i,:],self.currentROIs.ROIs[i], self.useROIValues, self.background)
-          pdict=params[0] #parameter dictionary
+          pdicti=params[0] #parameter dictionary
           plist=params[1] #parameter list
           d= data[i,:] > self.noisefactor*self.background  
           nfitpoints = len(data[i,d]) 
-          out = lmfit.minimize(T2SE.T2SE,pdict,args=(TE[d],data[i,d]))
+          out = lmfit.minimize(T2SE.T2SE,pdicti,args=(TE[d],data[i,d]))
+          pdict=out.params
           self.fity[i:]= T2SE.T2SE(pdict, self.fitx, np.zeros(len(self.fitx)))
           self.msgPrint ("{:02d}".format(i+1)+ " " )
           sr = sr + "ROI " + "{:02d}".format(i+1)+os.linesep  #build output report text for detailed fitting info
@@ -1043,9 +1145,10 @@ class ROIView(QtGui.QMainWindow):
       sr = "T1-VFA fitting details" + "\n"
       for i, roi in enumerate(self.pgROIs):
           params=T1VFA.initializeT1VFA (i,FA, data[i,:],np.array([self.ds.TR[j] for j in self.reducedImageSet])[0] ) #note VFA model needs TR
-          pdict=params[0] #parameter dictionary
+          pdicti=params[0] #parameter dictionary
           plist=params[1] #parameter list   
-          out = lmfit.minimize(T1VFA.T1VFA,pdict,args=(FA*np.pi/180.0,data[i,:]))
+          out = lmfit.minimize(T1VFA.T1VFA,pdicti,args=(FA*np.pi/180.0,data[i,:]))
+          pdict=out.params
           self.fity[i:]= T1VFA.T1VFA(pdict, self.fitx*np.pi/180.0, np.zeros(len(self.fitx)))
           self.msgPrint ("{:02d}".format(i+1))
           sr= sr + ("ROI " + "{:02d}".format(i+1)+os.linesep)  #build output report text
@@ -1074,9 +1177,10 @@ class ROIView(QtGui.QMainWindow):
       sr = "T1-VTR fitting details" + "\n"
       for i, roi in enumerate(self.pgROIs):
           params=T1VTR.initializeT1VTR (i, TR, data[i,:], self.currentROIs.ROIs[i], self.ds, self.reducedImageSet)  #note VTR model needs FA, TE
-          pdict=params[0] #parameter dictionary
+          pdicti=params[0] #parameter dictionary
           plist=params[1] #parameter list   
-          out = lmfit.minimize(T1VTR.T1VTR,pdict,args=(TR,data[i,:]))
+          out = lmfit.minimize(T1VTR.T1VTR,pdicti,args=(TR,data[i,:]))
+          pdict=out.params
           self.fity[i:]= T1VTR.T1VTR(pdict, self.fitx, np.zeros(len(self.fitx)))
           self.msgPrint ("{:02d}".format(i+1))
           sr= sr + ("ROI " + "{:02d}".format(i+1)+os.linesep)  #build output report text
@@ -1104,9 +1208,10 @@ class ROIView(QtGui.QMainWindow):
       sr = "T1-IR fitting details" + "\n"
       for i, roi in enumerate(self.pgROIs):
           params=T1IRabs.initializeT1IRabs (i,TI, data[i,:],self.currentROIs.ROIs[i], self.useROIValues)
-          pdict=params[0] #parameter dictionary
-          plist=params[1] #parameter list   
-          out = lmfit.minimize(T1IRabs.T1IRabs,pdict,args=(TI,data[i,:]))
+          pdicti=params[0] #parameter dictionary
+          plist=params[1] #parameter list
+          out = lmfit.minimize(T1IRabs.T1IRabs,pdicti,args=(TI,data[i,:]))
+          pdict=out.params
           self.fity[i:]= T1IRabs.T1IRabs(pdict, self.fitx, np.zeros(len(self.fitx)))
           self.msgPrint ("{:02d}".format(i+1)+ " " )
           sr = sr + "ROI " + "{:02d}".format(i+1)+os.linesep  #build output report text for detailed fitting info
@@ -1229,6 +1334,22 @@ class ROIView(QtGui.QMainWindow):
       self.resultsPlot.setTitle("Results")
       self.roiPen = pg.mkPen('p', width=3)      
 
+  def TEChanged(self):
+      if self.TEChangedFlag == True:
+        try:
+          self.ds.TE[self.nCurrentImage]=float(self.ui.lblTE.toPlainText())
+        except:
+          pass
+      self.TEChangedFlag == True
+      
+  def TRChanged(self):
+      if self.TRChangedFlag == True:
+        try:
+          self.ds.TR[self.nCurrentImage]=float(self.ui.lblTR.toPlainText())
+        except:
+          pass
+      self.TRChangedFlag == True
+            
   def msgPrint (self, s):
           self.ui.txtResults.insertPlainText(s)
 
@@ -1297,29 +1418,67 @@ class fCircleROI(pg.EllipseROI):
             #self.ROIViewInstance.currentROI=-1
         self.update() 
         
-#     def trimCircularROI(self,array):
-#       '''trims excess 0-value pixels from 2-d array and returns a 1-d array of values within circular ROI'''
-#       nz =np.count_nonzero(array)
-#       outarray = np.array([])    
-#       # rx=array.shape[0]/2
-#       # ry=array.shape[1]/2
-#       # r=rx- 0.5
-#       # for (i,j), value in np.ndenumerate(array):
-#       #   if (i+0.5-rx)**2 + (j+0.5-ry)**2 <= r**2:
-# 
-#       for i in range(array.shape[0]):
-#         outarray=np.append(outarray,np.trim_zeros(array[i]) )
-#       if outarray.size<> nz:
-#         print "ROI trim problem: # of output array zero elements= " + str(outarray.size - np.count_nonzero(outarray)) 
-#         print "ROI trim problem: # of nonzero input array elememnts - # output array elements " + str(nz - outarray.size)
-#       return outarray
+class fRectROI(pg.RectROI):
+    """Defines a rectangular ROI using pyqtgraph's RectROI"""
+    def __init__(self, callingform, pos, size, label,   **args):   
+        pg.ROI.__init__(self, pos, size, **args)
+        self.aspectLocked = False
+        self.ROIViewInstance=callingform
+        self.Index = 0
+        self.label = pg.TextItem(label, callingform.lblColor, anchor = (0,0))
+        self.label.setPos(pos[0],pos[1])
+        self.label.setFont(callingform.lblFont)
+
+    def mouseDragEvent(self, ev):       #Dragging ROI event: translates ROIs
+        if ev.isStart():  
+            if ev.button() == QtCore.Qt.LeftButton:
+                self.setSelected(True)
+                if self.translatable:
+                    self.isMoving = True
+                    self.preMoveState = self.getState()
+                    self.cursorOffset = self.pos() - self.mapToParent(ev.buttonDownPos())
+                    self.sigRegionChangeStarted.emit(self)
+                    ev.accept()
+                else:
+                    ev.ignore()
+        elif ev.isFinish():
+            if self.translatable:
+                if self.isMoving:
+                    self.stateChangeFinished()
+                self.isMoving = False
+            return
+        if self.translatable and self.isMoving and ev.buttons() == QtCore.Qt.LeftButton:
+            snap = True if (ev.modifiers() & QtCore.Qt.ControlModifier) else None
+            newPos = self.mapToParent(ev.pos()) + self.cursorOffset
+#            self.translate(newPos - self.pos(), snap=snap, finish=False)
+            self.ROIViewInstance.translateROIs(newPos - self.pos(),snap, self.Index)
+
+    def setMouseHover(self, hover):
+        '''Inform the ROI that the mouse is(not) hovering over it'''
+        if self.mouseHovering == hover:
+            return
+        self.mouseHovering = hover
+        if hover:
+            self.currentPen = fn.mkPen(255, 255, 0)
+            array = self.getArrayRegion(self.ROIViewInstance.ds.PA[self.ROIViewInstance.nCurrentImage],self.ROIViewInstance.imv.getImageItem())
+            mean=array.mean()
+            std=array.std()
+            self.ROIViewInstance.currentROI=self.ROIViewInstance.currentROIs.ROIs[self.Index-1]           
+            self.ROIViewInstance.currentROI.SignalAve= mean
+            self.ROIViewInstance.currentROI.SignalRMS= std
+            self.ROIViewInstance.showROIInfo()
+        else:
+            self.currentPen = self.pen
+            #self.ROIViewInstance.currentROI=-1
+        self.update() 
+        
     
 class imageStackWindow(ROIView):
   def __init__(self, rv, parent = None):
     '''Define image stack windows and menus, rv is the parent ROIView window'''    
     super(ROIView, self).__init__()
     self.win = QtGui.QMainWindow()
-    self.win.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+    #self.win.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
     self.win.resize(800,600)
     self.imv = pg.ImageView( view = pg.PlotItem())
     self.win.setCentralWidget(self.imv)
@@ -1338,6 +1497,11 @@ class imageStackWindow(ROIView):
     self.actionClear_All_Images.setStatusTip('Clear All Images')
     self.actionClear_All_Images.triggered.connect(rv.clearImages)
     self.imageMenu.addAction(self.actionClear_All_Images)
+    
+    self.actionWrite_Animated_GIF = QtGui.QAction('Write Animated GIF', self)
+    self.actionWrite_Animated_GIF.setStatusTip('Write Animated GIF')
+    self.actionWrite_Animated_GIF.triggered.connect(rv.writeAnimatedGIF)
+    self.imageMenu.addAction(self.actionWrite_Animated_GIF)
            
     self.phantomMenu = self.menu.addMenu('&Phantoms')
     self.actionOpenPhantomFile = QtGui.QAction('Open phantom file', self)

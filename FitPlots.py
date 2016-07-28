@@ -6,7 +6,7 @@ Uses FitPlotsGui.py created from FitPlots.ui by QT4
 '''
 from PyQt4 import QtGui, QtCore
 import pyqtgraph as pg
-import pyqtgraph.opengl as gl
+#import pyqtgraph.opengl as gl
 import pyqtgraph.functions as fn
 from FitPlotsGui import Ui_FitPlotsGui
 

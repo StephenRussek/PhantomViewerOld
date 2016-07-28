@@ -89,11 +89,11 @@ class VarianData:
              span=span.replace("{"," ").replace("}"," ")
              fdfImage.FoVX = float(span.split(",")[0]) * 10.        #asuming cm and converts to mm, needs work
              fdfImage.FoVY = float(span.split(",")[1]) * 10.
-          if( line.find("TR") > 0 ):
+          if( line.find("TR =") > 0 ):
              fdfImage.RepetitionTime = float(line.split("=")[-1].rstrip("\n; ").strip(" "))             
-          if( line.find("TE") > 0 ):
+          if( line.find("TE =") > 0 ):
              fdfImage.EchoTime = float(line.split("=")[-1].rstrip("\n; ").strip(" "))             
-          if( line.find("TI") > 0 ):
+          if( line.find("TI =") > 0 ):
              fdfImage.InversionTime = float(line.split("=")[-1].rstrip("\n; ").strip(" ")) 
           if( line.find("ro_size") > 0 ):
              fdfImage.ro = line.split("=")[-1].rstrip("\n; ").strip(" ")
