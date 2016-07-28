@@ -19,11 +19,15 @@ nT1Array = nCArrayMax      #actual number in T1 array
 nT2Array = nCArrayMax
 nPDArray = nCArrayMax
 nFAArray = nFAArrayMax
-nSNRROIs = 1
-snrX = 80.
-snrY = 80.
-snrZ = 80.
-snrROIdiameter = 20
+nSNRROIs = 2    #ROIs to determine background counts and noise
+bgX = 80.
+bgY = 80.
+bgZ = 80.
+snrX = 0.
+snrY = 0.
+snrZ = 0.
+snrROIdiameter = 30
+bgROIdiameter = 20
 T1ArrayY = -56.5        #y position of arrays in mm
 T2ArrayY = -16.5
 PDArrayY = 23.5
@@ -57,19 +61,6 @@ PDArrayPD=[5.,10.,15.,20.,25.,30.,35.,40.,50.,60.,70.,80.,90.,100.]
 comment = "http://collaborate.nist.gov/mriphantoms/bin/view/MriPhantoms/MRISystemPhantom"
 
 
-#  def SetDefaultFiducialROIs(self):
-#    for I in range (-2,3):
-#      for j in range(-2,3):
-#        for K in range(-2,3):
-#          If (I ^ 2 + j ^ 2 + K ^ 2) ^ 0.5 * ROIProperties.FASpacing < (PhantomRadius - FASphereRadius - 2):
-#            FAROIsi(nf).ROIRadius = FASphereRadius
-#            FAROIsi(nf).Xcenter = I * FASpacing
-#            FAROIsi(nf).Ycenter = j * FASpacing
-#            FAROIsi(nf).Zcenter = K * FASpacing
-#            nf = nf + 1
-#    for I in range ( 1, nFAArray)
-#        FAROIs(I) = FAROIsi(I)
-
 class SystemPhantom(VPhantom.VPhantom):
   """A virtual phantom that describes NIST ISMRM MRI system phantom"""
   def __init__(self):
@@ -90,6 +81,7 @@ class SystemPhantom(VPhantom.VPhantom):
     self.T2ROIs =self.SetDefaultContrastROIs("T2")
     self.T2ROIs.Comment = "MnCl2 array with root 2 decrease in T2" 
     self.T2ROIs.ROIColor = 'r'
+    self.T2ROIs.showBackgroundROI=True    #flag to show background ROI to determine if an ROI should be discarded
     for roi in self.T2ROIs.ROIs:    #sets T2, concentration
       roi.T2=T2ArrayT2[roi.Index-1]
       roi.Concentration=T2ArrayConcentration[roi.Index-1]
@@ -98,6 +90,8 @@ class SystemPhantom(VPhantom.VPhantom):
     self.PDROIs =self.SetDefaultContrastROIs("PD")    #sets roi positions
     self.PDROIs.Comment = "D20 array 0% to 95%"
     self.PDROIs.ROIColor = 'y'
+    self.PDROIs.showBackgroundROI=True    #flag to show background ROI to determine if an ROI should be discarded
+    self.PDROIs.showSNRROI=True           #flag to show a noise ROI to determine noise from an image subtraction
     for roi in self.PDROIs.ROIs:    #sets PD, concentration
       roi.PD=PDArrayPD[roi.Index-1]
     self.ROIsets.append(self.PDROIs)
@@ -166,28 +160,49 @@ class SystemPhantom(VPhantom.VPhantom):
       r.Field = 1.5
       r.Temperature = 20.
       r.nROIs=nSNRROIs
-      r.ROIColor = "y"
-      r.ROIs.append(VPhantom.ROI())
+      r.ROIColor = "b"
+      r.ROIs.append(VPhantom.ROI())   #ROI in non signal region to determine background signal used to exclude data near background
       r.ROIs[-1].Name = ptype + "-" + "1"
       r.ROIs[-1].Index = 1    #note the index starts at one while the list index starts at 0
+      r.ROIs[-1].d1 = bgROIdiameter
+      r.ROIs[-1].Xcenter = bgX
+      r.ROIs[-1].Zcenter = bgZ
+      r.ROIs[-1].Ycenter = bgY
+      r.ROIs.append(VPhantom.ROI()) # large ROI in featureless region to determine noise via subtracting identical images
+      r.ROIs[-1].Name = ptype + "-" + "2"
+      r.ROIs[-1].Index = 2    #note the index starts at one while the list index starts at 0
       r.ROIs[-1].d1 = snrROIdiameter
       r.ROIs[-1].Xcenter = snrX
       r.ROIs[-1].Zcenter = snrZ
       r.ROIs[-1].Ycenter = snrY
       return r
-  #  def SetDefaultSliceProfileROIs(self):    
-  #    'set slice profile ROIs
-  #    SPROIsi(1).Xcenter = spXCenter1
-  #    SPROIsi(1).Ycenter = spYCenter1
-  #    SPROIsi(1).Zcenter = spZCenter1
-  #    SPROIsi(2).Xcenter = spXCenter2
-  #    SPROIsi(2).Ycenter = spYCenter2
-  #    SPROIsi(2).Zcenter = spZCenter2
-  #    
-  #    SPROIs(1) = SPROIsi(1)
-  #    SPROIs(2) = SPROIsi(2)
-  #    
-  #    SNRROI(1).ROIRadius = SNRROIri
-  #    SNRROI(1).Xcenter = SNRROIxi
-  #    SNRROI(1).Zcenter = SNRROIyi
-  #    SNRROI(1).Ycenter = SNRROIzi
+    
+#  def SetDefaultSliceProfileROIs(self):    
+#     '''set slice profile ROIs'''
+#     SPROIsi(1).Xcenter = spXCenter1
+#     SPROIsi(1).Ycenter = spYCenter1
+#     SPROIsi(1).Zcenter = spZCenter1
+#     SPROIsi(2).Xcenter = spXCenter2
+#     SPROIsi(2).Ycenter = spYCenter2
+#     SPROIsi(2).Zcenter = spZCenter2
+#       
+#     SPROIs(1) = SPROIsi(1)
+#     SPROIs(2) = SPROIsi(2)
+#       
+#     SNRROI(1).ROIRadius = SNRROIri
+#     SNRROI(1).Xcenter = SNRROIxi
+#     SNRROI(1).Zcenter = SNRROIyi
+#     SNRROI(1).Ycenter = SNRROIzi
+  
+#   def SetDefaultFiducialROIs(self):
+#     for I in range (-2,3):
+#       for j in range(-2,3):
+#         for K in range(-2,3):
+#           if (I**2 + j**2 + K**2)**0.5 * FASpacing < (PhantomRadius - FASphereRadius - 2):
+#             FAROIsi(nf).ROIRadius = FASphereRadius
+#             FAROIsi(nf).Xcenter = I * FASpacing
+#             FAROIsi(nf).Ycenter = j * FASpacing
+#             FAROIsi(nf).Zcenter = K * FASpacing
+#             nf = nf + 1
+#     for I in range ( 1, nFAArray):
+#         FAROIs(I) = FAROIsi(I)

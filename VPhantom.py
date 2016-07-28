@@ -124,6 +124,8 @@ class ROISet():
     self.Comment = ""
     self.ROIColor = "g"
     self.ROIs = []    #List of ROIs"
+    self.showBackgroundROI=False    #flag to show background ROI to determine if an ROI should be discarded
+    self.showSNRROI=False           #flag to show a noise ROI to determine noise from an image subtraction
     dROI=ROI()
     if name == "":  #If no name is given create one default ROI
         self.ROIs.append(dROI)

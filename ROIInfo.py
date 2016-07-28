@@ -29,8 +29,8 @@ class ROIInfoWindow(QtGui.QMainWindow):
       self.ui.txtADC.setText("{:.2f}".format(roi.ADC*1000))
       self.ui.txtConcentration.setText("{:.2f}".format(roi.Concentration))
       self.ui.txtProtonDensity.setText("{:.2f}".format(roi.PD))
-      self.ui.lblAve.setText("{:.2f}".format(roi.SignalAve))
-      self.ui.lblSd.setText("{:.2f}".format(roi.SignalRMS))
+      self.ui.lblAve.setText("{:.3f}".format(roi.SignalAve))
+      self.ui.lblSd.setText("{:.3f}".format(roi.SignalRMS))
       
     def saveChanges(self):
       roi=self.roi

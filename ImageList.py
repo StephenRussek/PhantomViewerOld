@@ -5,6 +5,7 @@ The image list contains a set of lists that contains header information, image p
 ImageList has a default null image at list position 0, the first image is then at index 1.  
   This is so if you delete all image there still is the default image to be displayed. 
 This class contains a method to write an ImageList to DICOM, not a good way to modify DICOM files since not all of the header information is preserved
+To write out animated gifs requires visvis "pip install visvis" :Visvis is a pure Python library for visualization of 1D to 4D data in an object oriented way.
 Last modification 6-3-14
 @author: stephen russek
 '''
@@ -17,6 +18,8 @@ try:
   import Image  #imports tif gif
 except:
   pass     
+from images2gif import writeGif
+
 import struct
 
 class ImageList():
@@ -179,7 +182,18 @@ class ImageList():
             ds.is_little_endian = True
             ds.is_implicit_VR = True
             ds.save_as(fileName)
-    
+
+  def writeAnimatedGIF(self, filename):         
+        filename = filename  + ".gif"
+        images=[]
+        for im in self.PA[1:]:
+          im-=im.min()    #set lowestvalue to 0
+          im*=1/im.max()  #set highest value to 1
+          im=np.transpose(im)
+          images.append(im)
+        writeGif(filename, images, duration = 0.2, repeat=True, dither = False)         
+
+        
   def unpackImageFile(self, ImageFile, FileName, fileType): 
     """Unpacks several types of image files and appends all attributes into image stack  lists"""
     self.FileName.append(FileName)
